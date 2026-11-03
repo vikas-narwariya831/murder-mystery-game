@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { ServerVault3D } from './ServerVault3D';
 import { 
-  Server, 
   Terminal, 
   Lock, 
   Unlock, 
   Binary, 
-  ArrowRight
+  ArrowRight,
+  Rotate3d,
+  Cpu,
+  Wifi,
+  ShieldAlert
 } from 'lucide-react';
 import { sounds } from '../services/audioService';
 import confetti from 'canvas-confetti';
@@ -19,7 +25,7 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
   onBypassComplete,
   onGoToInterrogation,
 }) => {
-  // Firewalls Grid State (3 Cyber Decryption Nodes)
+  // 3 Firewalls Grid State
   const [nodes, setNodes] = useState([
     { id: 1, name: 'QUANTUM GATEWAY ALPHA', frequency: 120, target: 440, solved: false },
     { id: 2, name: 'OFFSHORE TRANSFER CIPHER', frequency: 280, target: 880, solved: false },
@@ -29,11 +35,12 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
   const [activeNode, setActiveNode] = useState(1);
   const [currentVal, setCurrentVal] = useState(100);
   const [terminalLogs, setTerminalLogs] = useState<string[]>([
-    "[SYSTEM INITIALIZED]: Subterranean Server Vault Level 2.",
-    "[WARNING]: Security node locks active. Tune frequency alignment to breach.",
+    "[BREACH PROTOCOL INITIATED]: Connected to Subterranean Quantum Server Core.",
+    "[CYBER INTRUSION]: Rotate 3D mainframe and align frequency harmonic to hack nodes.",
   ]);
 
   const allSolved = nodes.every(n => n.solved);
+  const solvedNodeIds = nodes.filter(n => n.solved).map(n => n.id);
 
   const handleTune = (delta: number) => {
     sounds.playBeep(currentVal + delta, 'sine', 0.05);
@@ -41,157 +48,153 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
     setCurrentVal(newVal);
 
     const targetNode = nodes.find(n => n.id === activeNode);
-    if (targetNode && Math.abs(newVal - targetNode.target) < 30) {
-      // Locked on frequency!
+    if (targetNode && Math.abs(newVal - targetNode.target) < 30 && !targetNode.solved) {
       sounds.playSafeSuccess();
       setNodes(prev => prev.map(n => n.id === activeNode ? { ...n, solved: true } : n));
       setTerminalLogs(prev => [
-        `[SUCCESS]: Node ${activeNode} (${targetNode.name}) decrypted!`,
+        `[FIREWALL BREACHED]: Node #0${activeNode} (${targetNode.name}) decrypted successfully!`,
         ...prev.slice(0, 5)
       ]);
-      confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+      confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
       onBypassComplete();
     }
   };
 
   return (
-    <div className="w-full h-full relative bg-slate-950 flex flex-col justify-between p-4 sm:p-8 select-none overflow-hidden" style={{ minHeight: 'calc(100vh - 105px)' }}>
-      {/* Background Matrix Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none opacity-40" />
+    <div className="w-full h-full relative bg-slate-950 overflow-hidden select-none" style={{ minHeight: 'calc(100vh - 105px)' }}>
+      
+      {/* ── REAL 3D WEBGL CYBER HACKING VAULT VIEWPORT ── */}
+      <div className="absolute inset-0">
+        <Canvas shadows dpr={[1, 2]} gl={{ antialias: true }}>
+          <PerspectiveCamera makeDefault position={[0, 3.2, 7.8]} fov={40} near={0.1} far={50} />
+          <OrbitControls 
+            enablePan={false} 
+            enableZoom={true} 
+            minDistance={3.5} 
+            maxDistance={12} 
+            maxPolarAngle={Math.PI / 2.1} 
+            minPolarAngle={Math.PI / 6}
+            target={[0, 1.6, 0]}
+            rotateSpeed={0.6}
+          />
+          <ServerVault3D 
+            activeNode={activeNode} 
+            solvedNodes={solvedNodeIds} 
+            isBreached={allSolved} 
+          />
+        </Canvas>
+      </div>
 
-      {/* Top Level 2 Header HUD */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-            <Server className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono tracking-widest uppercase bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full font-bold border border-indigo-500/30">
-                LEVEL 2 • SUBTERRANEAN
-              </span>
-              <span className="text-xs text-slate-400 font-mono">B-Floor Server Matrix</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-0.5">
-              Quantum Server Core & Patent Vault
-            </h2>
-          </div>
-        </div>
+      {/* 3D Camera Orbit Drag Hint */}
+      <div className="absolute top-4 left-4 z-20 bg-slate-950/80 backdrop-blur-md border border-slate-700/80 px-3 py-1.5 rounded-xl text-[10px] font-mono text-slate-300 pointer-events-none flex items-center gap-1.5 shadow-lg">
+        <Rotate3d className="w-3.5 h-3.5 text-sky-400 animate-spin [animation-duration:8s]" />
+        <span>3D Cyber Mainframe: Drag mouse to orbit server racks</span>
+      </div>
 
-        {/* Proceed to Level 3 Interrogation Button */}
-        {allSolved && (
+      {/* ── TOP HUD: LEVEL 2 OVERVIEW & PROCEED ACTION ── */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+        {allSolved ? (
           <button
             onClick={onGoToInterrogation}
-            className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs uppercase font-mono tracking-wider rounded-xl shadow-lg shadow-emerald-600/30 flex items-center gap-2 animate-bounce transition-all active:scale-95"
+            className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs uppercase font-mono tracking-wider rounded-xl shadow-[0_0_25px_rgba(16,185,129,0.5)] flex items-center gap-2 animate-bounce transition-all active:scale-95 cursor-pointer"
           >
+            <ShieldAlert className="w-4 h-4" />
             <span>Proceed to Level 3: Interrogation Cell</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+        ) : (
+          <div className="px-3.5 py-1.5 bg-slate-900/90 border border-indigo-500/40 rounded-xl text-xs font-mono text-indigo-300 backdrop-blur-md flex items-center gap-2 shadow-lg">
+            <Wifi className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+            <span>{solvedNodeIds.length}/3 Firewalls Breached</span>
+          </div>
         )}
       </div>
 
-      {/* Center 3D Interactive Quantum Rack Terminals */}
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
-        {nodes.map(node => (
-          <div
-            key={node.id}
-            onClick={() => {
-              setActiveNode(node.id);
-              setCurrentVal(node.frequency);
-              sounds.playBeep(400);
-            }}
-            className={`p-5 rounded-2xl border transition-all cursor-pointer backdrop-blur-xl relative overflow-hidden flex flex-col justify-between ${
-              activeNode === node.id
-                ? 'bg-slate-900/90 border-indigo-500 shadow-[0_0_30px_rgba(99,102,241,0.25)] ring-1 ring-indigo-500/50'
-                : 'bg-slate-900/40 border-slate-800 hover:border-slate-700 text-slate-400'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-mono text-xs font-bold text-indigo-400">NODE #0{node.id}</span>
-              {node.solved ? (
-                <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  <Unlock className="w-3 h-3" /> DECRYPTED
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-[11px] font-mono text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-500/30">
-                  <Lock className="w-3 h-3" /> LOCKED
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <h3 className="font-mono font-bold text-sm text-white">{node.name}</h3>
-              <p className="text-[11px] text-slate-400 font-mono">Target: {node.target} MHz Alignment</p>
-            </div>
-
-            {/* Signal visualizer bar */}
-            <div className="w-full bg-slate-950 rounded-full h-2 mt-4 overflow-hidden border border-slate-800">
-              <div 
-                className={`h-full transition-all duration-300 ${node.solved ? 'bg-emerald-400' : 'bg-indigo-500'}`}
-                style={{ width: `${Math.min(100, (node.frequency / node.target) * 100)}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Frequency Tuning Dial & Terminal Console */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Tuning Frequency Controller */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
-            <span className="text-xs font-mono font-bold text-slate-300 flex items-center gap-1.5">
-              <Binary className="w-4 h-4 text-sky-400" /> RESIDUAL FREQUENCY SYNCHRONIZER
+      {/* ── BOTTOM CYBER HACKING TERMINAL DOCK ── */}
+      <div className="absolute bottom-4 inset-x-4 sm:inset-x-8 z-20 pointer-events-none flex flex-col md:flex-row gap-3">
+        
+        {/* Node Switcher Tabs */}
+        <div className="flex-1 bg-slate-950/80 backdrop-blur-2xl border border-slate-800 rounded-2xl p-3 pointer-events-auto space-y-2 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+            <span className="text-[11px] font-mono font-bold text-slate-400 flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-sky-400" /> SELECT QUANTUM RACK NODE
             </span>
-            <span className="text-xs font-mono font-bold text-indigo-400">{currentVal} MHz</span>
+            <span className="text-[10px] font-mono text-slate-400">Target Frequency Matching</span>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            {nodes.map(node => (
               <button
-                onClick={() => handleTune(-100)}
-                className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition-all active:scale-95"
+                key={node.id}
+                onClick={() => {
+                  setActiveNode(node.id);
+                  setCurrentVal(node.frequency);
+                  sounds.playBeep(450);
+                }}
+                className={`p-2.5 rounded-xl border text-left transition-all active:scale-95 cursor-pointer ${
+                  activeNode === node.id
+                    ? 'bg-indigo-600/25 border-indigo-500 text-white shadow-md'
+                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
               >
-                -100 MHz
+                <div className="flex items-center justify-between mb-1">
+                  <span className="font-mono text-[10px] font-bold text-indigo-400">#0{node.id}</span>
+                  {node.solved ? (
+                    <Unlock className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Lock className="w-3 h-3 text-amber-400" />
+                  )}
+                </div>
+                <div className="font-mono text-xs font-bold truncate text-slate-200">{node.name}</div>
+                <div className="font-mono text-[10px] text-slate-400 mt-0.5">{node.target} MHz</div>
               </button>
-              <button
-                onClick={() => handleTune(-20)}
-                className="flex-1 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-mono font-bold text-slate-200 border border-slate-700 transition-all active:scale-95"
-              >
-                -20 MHz
-              </button>
-              <button
-                onClick={() => handleTune(+20)}
-                className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-mono font-bold text-white transition-all active:scale-95 shadow-md shadow-indigo-600/30"
-              >
-                +20 MHz
-              </button>
-              <button
-                onClick={() => handleTune(+100)}
-                className="flex-1 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-mono font-bold text-white transition-all active:scale-95 shadow-md shadow-indigo-600/30"
-              >
-                +100 MHz
-              </button>
-            </div>
-
-            <p className="text-[11px] text-slate-400 font-mono text-center">
-              Tune frequency to match the target frequency of Node #{activeNode} to extract wiped telemetry.
-            </p>
+            ))}
           </div>
         </div>
 
-        {/* Live Terminal Telemetry Output */}
-        <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 font-mono text-xs text-sky-400 space-y-1 overflow-y-auto max-h-40 shadow-inner">
-          <div className="flex items-center gap-2 text-[10px] text-slate-500 border-b border-slate-900 pb-1 mb-1">
-            <Terminal className="w-3.5 h-3.5" />
-            <span>SUBTERRANEAN SENSOR TERMINAL OUTPUT</span>
+        {/* Frequency Tuning & Injector Controller */}
+        <div className="w-full md:w-80 bg-slate-950/80 backdrop-blur-2xl border border-slate-800 rounded-2xl p-3 pointer-events-auto space-y-2 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+            <span className="text-[11px] font-mono font-bold text-slate-400 flex items-center gap-1.5">
+              <Binary className="w-3.5 h-3.5 text-indigo-400" /> HARMONIC INJECTOR
+            </span>
+            <span className="text-xs font-mono font-bold text-cyan-400">{currentVal} MHz</span>
           </div>
-          {terminalLogs.map((log, idx) => (
-            <div key={idx} className="leading-snug text-slate-300">
-              {log}
-            </div>
-          ))}
+
+          <div className="grid grid-cols-4 gap-1.5">
+            <button
+              onClick={() => handleTune(-100)}
+              className="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-[11px] font-mono font-bold text-slate-300 border border-slate-700/80 active:scale-95 cursor-pointer transition-all"
+            >
+              -100
+            </button>
+            <button
+              onClick={() => handleTune(-20)}
+              className="py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-[11px] font-mono font-bold text-slate-300 border border-slate-700/80 active:scale-95 cursor-pointer transition-all"
+            >
+              -20
+            </button>
+            <button
+              onClick={() => handleTune(+20)}
+              className="py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[11px] font-mono font-bold text-white shadow-md active:scale-95 cursor-pointer transition-all"
+            >
+              +20
+            </button>
+            <button
+              onClick={() => handleTune(+100)}
+              className="py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-[11px] font-mono font-bold text-white shadow-md active:scale-95 cursor-pointer transition-all"
+            >
+              +100
+            </button>
+          </div>
+
+          {/* Console Mini-Log */}
+          <div className="text-[10px] font-mono text-slate-400 truncate flex items-center gap-1 pt-0.5">
+            <Terminal className="w-3 h-3 text-emerald-400 shrink-0" />
+            <span className="truncate">{terminalLogs[0]}</span>
+          </div>
         </div>
+
       </div>
     </div>
   );
