@@ -18,9 +18,12 @@ export const CaseBriefingModal: React.FC<CaseBriefingModalProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+    <div 
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-fade-in pointer-events-auto"
+      onClick={onClose}
+    >
       <div 
-        className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up"
+        className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden animate-scale-up pointer-events-auto relative z-[101]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Badge */}
@@ -125,8 +128,13 @@ export const CaseBriefingModal: React.FC<CaseBriefingModalProps> = ({ isOpen, on
             Ready to solve the mystery?
           </span>
           <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-sm rounded-xl shadow-md shadow-red-600/20 transition-all flex items-center gap-2"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="px-6 py-2.5 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-sm rounded-xl shadow-md shadow-red-600/20 transition-all flex items-center gap-2 cursor-pointer z-50 pointer-events-auto"
           >
             <span>Start Investigation</span>
             <ArrowRight className="w-4 h-4" />
