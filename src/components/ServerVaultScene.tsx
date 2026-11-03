@@ -61,11 +61,12 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
   };
 
   return (
-    <div className="w-full h-full relative bg-slate-950 overflow-hidden select-none" style={{ minHeight: 'calc(100vh - 105px)' }}>
+    <div className="w-full h-full relative bg-slate-900 overflow-hidden select-none" style={{ minHeight: 'calc(100vh - 105px)' }}>
       
       {/* ── REAL 3D WEBGL CYBER HACKING VAULT VIEWPORT ── */}
       <div className="absolute inset-0">
         <Canvas shadows dpr={[1, 2]} gl={{ antialias: true }}>
+          <color attach="background" args={['#e2e8f0']} />
           <PerspectiveCamera makeDefault position={[0, 2.6, 5.5]} fov={42} near={0.1} far={50} />
           <OrbitControls 
             enablePan={false} 
