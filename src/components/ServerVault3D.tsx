@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
@@ -9,6 +9,77 @@ interface ServerVault3DProps {
   solvedNodes: number[];
   isBreached: boolean;
   isHacking?: boolean;
+}
+
+// Generates procedural dynamic green/cyan binary code stream texture on canvas
+function useBinaryMatrixTexture(isHacking: boolean, isBreached: boolean) {
+  const { canvas, ctx, texture } = useMemo(() => {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 256;
+    const context = c.getContext('2d');
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return { canvas: c, ctx: context, texture: tex };
+  }, []);
+
+  const columns = useMemo(() => {
+    const cols = 28;
+    return Array.from({ length: cols }, () => ({
+      y: Math.random() * 256,
+      speed: 4 + Math.random() * 8,
+      chars: Array.from({ length: 16 }, () => (Math.random() > 0.5 ? '1' : '0')),
+    }));
+  }, []);
+
+  useFrame(() => {
+    if (!ctx) return;
+
+    // Dark semi-transparent fade background for trailing matrix effect
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.22)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = 'bold 13px monospace';
+    const textColor = isBreached 
+      ? '#34d399' 
+      : isHacking 
+      ? '#38bdf8' 
+      : '#0284c7';
+
+    columns.forEach((col, i) => {
+      const x = i * 18 + 8;
+      col.y += isHacking ? col.speed * 2.2 : col.speed * 0.9;
+      if (col.y > 270) {
+        col.y = -20;
+      }
+
+      col.chars.forEach((char, j) => {
+        const charY = (col.y - j * 14);
+        if (charY > 0 && charY < 256) {
+          if (Math.random() < 0.15) {
+            col.chars[j] = Math.random() > 0.5 ? '1' : '0';
+          }
+          // Bright leading character
+          if (j === 0) {
+            ctx.fillStyle = '#ffffff';
+          } else {
+            ctx.fillStyle = textColor;
+          }
+          ctx.fillText(char, x, charY);
+        }
+      });
+    });
+
+    // Draw active hacking header text overlay
+    ctx.fillStyle = isBreached ? '#10b981' : isHacking ? '#38bdf8' : '#0ea5e9';
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText(isBreached ? '>> ACCESS GRANTED: VAULT KEYCARD UNLOCKED' : isHacking ? '>> INJECTING HARMONIC CIPHER... [11010101]' : '>> QUANTUM VAULT TERMINAL ACTIVE', 12, 20);
+
+    texture.needsUpdate = true;
+  });
+
+  return texture;
 }
 
 export const ServerVault3D: React.FC<ServerVault3DProps> = ({
@@ -23,6 +94,9 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
   const screenGlowRef = useRef<THREE.PointLight>(null);
   const keycardRef = useRef<THREE.Group>(null);
   const safeVaultDoorRef = useRef<THREE.Group>(null);
+
+  // Dynamic Procedural 11010101 Binary Code Stream for Primary & Secondary Monitors
+  const binaryTexture = useBinaryMatrixTexture(isHacking, isBreached);
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
@@ -46,7 +120,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
     // Screen light pulse (faster when actively hacking)
     if (screenGlowRef.current) {
       const pulseSpeed = isHacking ? 12 : 4;
-      screenGlowRef.current.intensity = (isHacking ? 2.8 : 1.5) + Math.sin(t * pulseSpeed) * 0.3;
+      screenGlowRef.current.intensity = (isHacking ? 3.0 : 1.6) + Math.sin(t * pulseSpeed) * 0.35;
     }
 
     // Floating Master Keycard inside Safe / Vault
@@ -94,7 +168,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         </group>
       ))}
 
-      {/* ── REALISTIC METALLIC DATACENTER RAISED FLOOR (Dark Slate / Charcoal Tiles) ── */}
+      {/* ── REALISTIC METALLIC DATACENTER RAISED FLOOR ── */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[26, 22]} />
         <meshStandardMaterial color="#1e293b" roughness={0.4} metalness={0.6} />
@@ -103,7 +177,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
       <gridHelper args={[26, 26, '#475569', '#334155']} position={[0, 0.005, 0]} />
 
       {/* ── REALISTIC INDUSTRIAL SERVER ROOM WALLS (Matte Dark Slate Panels) ── */}
-      {/* Back Wall with Cable Channels & Aluminum Wall Trim */}
       <mesh position={[0, 3, -6.5]} receiveShadow>
         <planeGeometry args={[26, 7]} />
         <meshStandardMaterial color="#0f172a" roughness={0.6} metalness={0.4} />
@@ -132,7 +205,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
         return (
           <group key={idx} position={[xPos, 0, -2.4]}>
-            {/* Server Rack Solid Gunmetal Frame */}
             <RoundedBox args={[1.5, 4.2, 1.3]} radius={0.05} smoothness={4} position={[0, 2.1, 0]} castShadow receiveShadow>
               <meshStandardMaterial color="#1e293b" metalness={0.8} roughness={0.35} />
             </RoundedBox>
@@ -194,7 +266,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
       {/* ── HEAVY REINFORCED DATA VAULT SAFE (IN BACK WALL) ── */}
       <group position={[0, 1.4, -6.1]}>
-        {/* Vault Frame Embedded into Back Wall */}
         <RoundedBox args={[2.2, 2.2, 0.6]} radius={0.06} smoothness={4} castShadow receiveShadow>
           <meshStandardMaterial color="#1e293b" metalness={0.9} roughness={0.2} />
         </RoundedBox>
@@ -215,7 +286,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
         {/* ── FLOATING HACKED MASTER KEYCARD INSIDE VAULT ── */}
         <group ref={keycardRef} position={[0, 0, 0.2]}>
-          {/* Gold / Titanium RFID Keycard */}
           <RoundedBox args={[0.7, 0.44, 0.025]} radius={0.02} smoothness={3} castShadow>
             <meshStandardMaterial 
               color={isBreached ? '#fbbf24' : '#64748b'} 
@@ -225,12 +295,10 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
               emissiveIntensity={isBreached ? 1.0 : 0}
             />
           </RoundedBox>
-          {/* Gold Microchip */}
           <mesh position={[-0.16, 0, 0.015]}>
             <planeGeometry args={[0.18, 0.15]} />
             <meshStandardMaterial color="#fef08a" metalness={0.95} roughness={0.1} />
           </mesh>
-          {/* Magnetic Stripe */}
           <mesh position={[0, 0.1, -0.015]} rotation={[0, Math.PI, 0]}>
             <planeGeometry args={[0.66, 0.09]} />
             <meshStandardMaterial color="#0f172a" metalness={0.6} roughness={0.3} />
@@ -239,7 +307,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
         {/* ── HEAVY REINFORCED VAULT DOOR (SWINGS OPEN) ── */}
         <group ref={safeVaultDoorRef} position={[-0.95, 0, 0.3]}>
-          {/* Main Door Slab */}
           <RoundedBox args={[1.9, 2.0, 0.2]} radius={0.04} smoothness={4} position={[0.95, 0, 0]} castShadow>
             <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.25} />
           </RoundedBox>
@@ -260,7 +327,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
               <cylinderGeometry args={[0.12, 0.12, 0.08, 24]} />
               <meshStandardMaterial color="#475569" metalness={0.9} />
             </mesh>
-            {/* Digital Security Status LED */}
             <mesh position={[0, 0.6, 0]}>
               <sphereGeometry args={[0.04, 12, 12]} />
               <meshStandardMaterial 
@@ -275,7 +341,6 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
       {/* ── CENTRAL MASTER WORKSTATION & DESK ── */}
       <group position={[0, 0, 0.8]}>
-        {/* Sleek Charcoal / Slate Command Desk */}
         <RoundedBox args={[3.2, 0.12, 1.4]} radius={0.04} smoothness={4} position={[0, 0.9, 0]} castShadow receiveShadow>
           <meshStandardMaterial color="#1e293b" metalness={0.7} roughness={0.3} />
         </RoundedBox>
@@ -311,22 +376,23 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
           ))}
         </group>
 
-        {/* ── DUAL ULTRAWIDE HACKING MONITORS ── */}
+        {/* ── DUAL ULTRAWIDE HACKING MONITORS WITH 11010101 BINARY MATRIX ANIMATION ── */}
         {/* Center Main PC Monitor */}
         <group position={[0, 1.45, -0.1]}>
           <RoundedBox args={[1.5, 0.85, 0.06]} radius={0.02} smoothness={3} castShadow>
             <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.3} />
           </RoundedBox>
-          {/* Glowing Active Cyber Hacking Display Screen */}
+          {/* Active 11010101 Binary Code Stream Screen */}
           <mesh position={[0, 0, 0.035]}>
             <planeGeometry args={[1.44, 0.79]} />
             <meshStandardMaterial 
-              color={isBreached ? '#064e3b' : '#0369a1'} 
-              emissive={isBreached ? '#10b981' : '#0284c7'} 
-              emissiveIntensity={isHacking ? 2.2 : 1.4} 
+              map={binaryTexture}
+              emissiveMap={binaryTexture}
+              emissive="#ffffff"
+              emissiveIntensity={isHacking ? 1.4 : 0.85}
+              roughness={0.2}
             />
           </mesh>
-          {/* Stand & Base */}
           <mesh position={[0, -0.48, 0]}>
             <cylinderGeometry args={[0.04, 0.04, 0.35, 12]} />
             <meshStandardMaterial color="#64748b" metalness={0.9} />
@@ -337,7 +403,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
           </mesh>
         </group>
 
-        {/* Left Angled Secondary Telemetry Monitor */}
+        {/* Left Angled Secondary Telemetry Monitor with Binary stream */}
         <group position={[-1.15, 1.45, 0.05]} rotation={[0, 0.35, 0]}>
           <RoundedBox args={[0.85, 0.75, 0.05]} radius={0.02} smoothness={3} castShadow>
             <meshStandardMaterial color="#0f172a" metalness={0.8} roughness={0.3} />
@@ -345,9 +411,11 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
           <mesh position={[0, 0, 0.03]}>
             <planeGeometry args={[0.8, 0.7]} />
             <meshStandardMaterial 
-              color="#312e81" 
-              emissive="#6366f1" 
-              emissiveIntensity={1.2} 
+              map={binaryTexture}
+              emissiveMap={binaryTexture}
+              emissive="#ffffff"
+              emissiveIntensity={isHacking ? 1.2 : 0.7}
+              roughness={0.2}
             />
           </mesh>
           <mesh position={[0, -0.45, 0]}>
@@ -415,7 +483,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         </group>
       </group>
 
-      {/* ── DETECTIVE PANDA HACKING AT THE CONSOLE (PERFECT SEATED POSITION) ── */}
+      {/* ── DETECTIVE PANDA HACKING AT THE CONSOLE ── */}
       <group position={[0, 0, 1.55]}>
         <PandaDetective 
           position={[0, 0, 0]}
