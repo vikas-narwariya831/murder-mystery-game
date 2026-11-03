@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   getInitialClues, 
   generateRandomSafePuzzle, 
@@ -12,12 +12,18 @@ import { SafeKeypadModal } from './components/SafeKeypadModal';
 import { AccusationExitModal } from './components/AccusationExitModal';
 import { PortfolioModal } from './components/PortfolioModal';
 import { CaseBriefingModal } from './components/CaseBriefingModal';
+import { WaterOrbLoader } from './components/WaterOrbLoader';
 import {
   Search, MessageSquare, Key, RotateCcw,
   ShieldAlert, FileText, Sparkles, Trophy, Skull
 } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // Global 3D & Audio Asset Preloading State (Water Circle Fill)
+  const [isAppLoaded, setIsAppLoaded] = useState(false);
+  const [preloadProgress, setPreloadProgress] = useState(0);
+  const [currentPreloadItem, setCurrentPreloadItem] = useState('Initializing Memory...');
+
   const [currentPuzzle, setCurrentPuzzle] = useState<SafePuzzle>(INITIAL_SAFE_PUZZLE);
   const [activeTab, setActiveTab] = useState<'scene' | 'interrogation'>('scene');
   const [clues, setClues] = useState<ClueItem[]>(() => getInitialClues(INITIAL_SAFE_PUZZLE));
@@ -37,6 +43,44 @@ export const App: React.FC = () => {
     safeAttemptsLeft: 5,
     timeRemainingSeconds: 1200,
   });
+
+  // Preload all heavy 3D assets, textures, and audio files at App startup
+  useEffect(() => {
+    const assetsToLoad = [
+      { name: 'Panda Detective 3D Mesh (FBX)', url: '/Panda_Character.fbx', weight: 40 },
+      { name: 'Panda Detective Texture (4K)', url: '/Panda01_Holotna_Game_Studio_Texture.jpg', weight: 20 },
+      { name: 'Executive Gaming Chair (OBJ)', url: '/Cadeira.obj', weight: 20 },
+      { name: 'Forensic Dialogue Audio Track', url: '/nana_dialogue.mp3', weight: 10 },
+      { name: 'Suspect Caricature Portrait', url: '/nana_cartoon.jpg', weight: 10 },
+    ];
+
+    let currentSum = 0;
+
+    const loadAll = async () => {
+      for (const asset of assetsToLoad) {
+        setCurrentPreloadItem(`Loading ${asset.name}...`);
+        try {
+          await fetch(asset.url, { cache: 'force-cache' });
+        } catch {
+          // If fetch fails, keep progressing gracefully
+        }
+        currentSum += asset.weight;
+        setPreloadProgress(Math.min(100, currentSum));
+        // Small stagger for smooth organic wave motion
+        await new Promise(r => setTimeout(r, 220));
+      }
+
+      setCurrentPreloadItem('Compiling WebGL Shaders...');
+      setPreloadProgress(100);
+      
+      // Reveal the App smoothly
+      setTimeout(() => {
+        setIsAppLoaded(true);
+      }, 650);
+    };
+
+    loadAll();
+  }, []);
 
   const discoveredCount = clues.filter(c => c.discovered).length;
   const totalClues = clues.length;
@@ -84,6 +128,13 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+      {/* ── 3D CIRCULAR WATER FILL PRELOADER ────────────────── */}
+      {!isAppLoaded && (
+        <WaterOrbLoader 
+          progress={preloadProgress} 
+          item={currentPreloadItem} 
+        />
+      )}
 
       {/* ── CLEAN MINIMAL UNIFIED NAVBAR (NO CLUTTER) ───────── */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
