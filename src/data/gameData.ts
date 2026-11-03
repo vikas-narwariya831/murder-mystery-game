@@ -130,12 +130,12 @@ CHARACTER PROFILE:
   {
     id: 'aria',
     name: 'A.R.I.A.',
-    role: 'Autonomous Facility AI',
+    role: 'Central Security Subsystem',
     avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
-    description: 'The holographic security system controlling the smart mansion locks and environmental sensors.',
+    description: 'The holographic security subsystem controlling penthouse locks and environmental telemetry.',
     isGuilty: false,
     alibi: 'System operational logs show uninterrupted execution.',
-    systemPrompt: `You are A.R.I.A., the smart facility synthetic intelligence overseeing the executive penthouse.
+    systemPrompt: `You are A.R.I.A., the smart facility subsystem overseeing the executive penthouse.
 CHARACTER PROFILE:
 - Personality: Formal, robotic, eerie precision, slightly glitchy synthesized cadence.
 - DATA YOU HOLD:
@@ -151,7 +151,7 @@ CHARACTER PROFILE:
     messages: [
       {
         role: 'model',
-        text: 'Emergency Lockdown Protocol Active. Facility AI A.R.I.A. online. Detective credentials verified. Inquire regarding timestamped sensor telemetry or facility status.'
+        text: 'Emergency Lockdown Protocol Active. Facility Security Terminal A.R.I.A. online. Detective credentials verified. Inquire regarding timestamped sensor telemetry or facility status.'
       }
     ]
   }

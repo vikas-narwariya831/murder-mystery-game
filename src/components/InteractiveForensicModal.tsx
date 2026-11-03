@@ -173,7 +173,7 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
                   {isLoadingRiddle ? (
                     <div className="p-6 bg-slate-900 rounded-xl text-center text-sky-400 font-mono text-xs flex flex-col items-center justify-center gap-2 border border-slate-700">
                       <Cpu className="w-6 h-6 animate-spin text-sky-400" />
-                      <span>Generating Critical Loop Trace via Gemini AI...</span>
+                      <span>Deciphering Quantum Execution Logic...</span>
                     </div>
                   ) : riddle ? (
                     <div className="space-y-3">
@@ -237,7 +237,7 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
                           <button
                             onClick={loadNewPuzzle}
                             className="p-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-all"
-                            title="Regenerate new loop question from Gemini"
+                            title="Regenerate another logic puzzle"
                           >
                             <RefreshCw className="w-3.5 h-3.5" />
                           </button>

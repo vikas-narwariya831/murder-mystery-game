@@ -39,7 +39,7 @@ export const PortfolioModal: React.FC<PortfolioModalProps> = ({ isOpen, onClose 
             </div>
             <div>
               <h3 className="font-bold text-lg">About This Project</h3>
-              <p className="text-slate-400 text-xs">Portfolio showcase · AI-powered game</p>
+              <p className="text-slate-400 text-xs">Interactive 3D Murder Mystery & Forensic Investigation</p>
             </div>
           </div>
         </div>

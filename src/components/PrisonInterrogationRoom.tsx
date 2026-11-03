@@ -93,7 +93,7 @@ const SUSPECT_STAGES: Record<string, string[][]> = {
     // Stage 2
     [
       "A sub-routine in your core processor was modified to delete footage of the murder!",
-      "You were ordered to eliminate Vincent because he discovered the AI self-replication breach!",
+      "You were ordered to eliminate Vincent because he discovered the unauthorized system breach!",
       "Query: Identify the user terminal that uploaded the cyanide deployment protocol!",
     ],
     // Stage 3
