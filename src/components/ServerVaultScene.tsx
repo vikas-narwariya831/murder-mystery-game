@@ -66,15 +66,15 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
       {/* ── REAL 3D WEBGL CYBER HACKING VAULT VIEWPORT ── */}
       <div className="absolute inset-0">
         <Canvas shadows dpr={[1, 2]} gl={{ antialias: true }}>
-          <PerspectiveCamera makeDefault position={[0, 3.2, 7.8]} fov={40} near={0.1} far={50} />
+          <PerspectiveCamera makeDefault position={[0, 2.6, 5.5]} fov={42} near={0.1} far={50} />
           <OrbitControls 
             enablePan={false} 
             enableZoom={true} 
-            minDistance={3.5} 
-            maxDistance={12} 
-            maxPolarAngle={Math.PI / 2.1} 
-            minPolarAngle={Math.PI / 6}
-            target={[0, 1.6, 0]}
+            minDistance={2.8} 
+            maxDistance={10} 
+            maxPolarAngle={Math.PI / 2.05} 
+            minPolarAngle={Math.PI / 8}
+            target={[0, 1.4, 0.4]}
             rotateSpeed={0.6}
           />
           <ServerVault3D 
