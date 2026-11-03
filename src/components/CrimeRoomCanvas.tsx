@@ -85,8 +85,7 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
 }) => {
   const discoveredClues = clues.filter(c => c.discovered).map(c => c.id);
 
-  // Position Detective Panda and Maya close together investigating the victim
-  const [detectiveTargetPos, setDetectiveTargetPos] = useState<[number, number, number]>([-1.4, 0, 0.4]);
+  const [detectiveTargetPos, setDetectiveTargetPos] = useState<[number, number, number]>([-1.8, 0, 0.4]);
   const [isDetectiveSitting, setIsDetectiveSitting] = useState(false);
   const [hoveredPrompt, setHoveredPrompt] = useState<string | null>(null);
 
@@ -177,8 +176,8 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
             {isSceneReady && <fog attach="fog" args={['#f8fafc', 22, 45]} />}
             <PerspectiveCamera 
               makeDefault 
-              position={!isSceneReady ? [0, 2, 6] : isCutsceneActive ? [-1.6, 2.6, 3.2] : [3, 7, 9]} 
-              fov={42} 
+              position={!isSceneReady ? [0, 2, 6] : isCutsceneActive ? [-1.2, 3.8, 5.5] : [3, 7, 9]} 
+              fov={45} 
               near={0.1} 
               far={100} 
             />
@@ -186,13 +185,13 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
               enablePan={false}
               enableZoom={!isCutsceneActive && isSceneReady}
               enableRotate={!isCutsceneActive && isSceneReady}
-              minDistance={3}
+              minDistance={4}
               maxDistance={14}
               maxPolarAngle={Math.PI / 2.15}
               minPolarAngle={Math.PI / 6}
               minAzimuthAngle={-Math.PI * 0.45}
               maxAzimuthAngle={Math.PI * 0.45}
-              target={!isSceneReady ? [0, 1.8, 0] : isCutsceneActive ? [-1.6, 1.0, 0.4] : isDetectiveSitting ? [2.2, 1.8, 0] : [0.5, 1.5, 0]}
+              target={!isSceneReady ? [0, 1.8, 0] : isCutsceneActive ? [-1.8, 1.2, 0] : isDetectiveSitting ? [2.2, 1.8, 0] : [0.5, 1.5, 0]}
               rotateSpeed={0.5}
             />
             

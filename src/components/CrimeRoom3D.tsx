@@ -124,7 +124,7 @@ function NanaPatekarPainting({ onHoverTarget }: { onHoverTarget: (t: string | nu
 /* ── DETECTIVE AVATAR (PANDA 3D MODEL) ───────────────────── */
 function DetectiveAvatar({ targetPos, isSitting }: { targetPos: [number, number, number]; isSitting: boolean }) {
   const groupRef = useRef<THREE.Group>(null);
-  const currentPos = useRef(new THREE.Vector3(-1.4, 0, 0.4));
+  const currentPos = useRef(new THREE.Vector3(-1, 0, 2.8));
   const targetVec = useRef(new THREE.Vector3(...targetPos));
   const [isWalking, setIsWalking] = useState(false);
   const [hasReachedChair, setHasReachedChair] = useState(false);
@@ -227,8 +227,8 @@ function ForensicPartnerAvatar({
   return (
     <group 
       ref={partnerGroupRef} 
-      position={[-2.2, 0, 0.4]} 
-      rotation={[0, 1.2, 0]}
+      position={[-2.4, 0, -0.6]} 
+      rotation={[0, 0.8, 0]}
       onClick={handlePartnerInteract}
       onPointerOver={(e) => {
         e.stopPropagation();
