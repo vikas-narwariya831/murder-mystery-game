@@ -1,22 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import type { ClueItem, SafePuzzle } from '../types/game';
 import { 
-  RotateCw,
-  Search,
   FileText,
-  Sparkles,
-  Volume2,
-  CheckCircle,
   HelpCircle,
   Check,
   XCircle,
   Cpu,
   RefreshCw,
   Lock,
-  Unlock
+  Unlock,
+  Radio,
+  ScanLine
 } from 'lucide-react';
 import { sounds } from '../services/audioService';
 import { generateCriticalLoopPuzzle, type CodeRiddle } from '../services/geminiService';
+import { ForensicClue3DViewer } from './ForensicClue3DViewer';
 import confetti from 'canvas-confetti';
 
 interface ForensicModalProps {
@@ -26,10 +26,8 @@ interface ForensicModalProps {
 }
 
 export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, onClose, safePuzzle }) => {
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
-  const [rotation, setRotation] = useState<number>(0);
   const [highlightSecret, setHighlightSecret] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [isLaserScanning, setIsLaserScanning] = useState(false);
 
   // Critical Loop Decryption Challenge State
   const [riddle, setRiddle] = useState<CodeRiddle | null>(null);
@@ -78,84 +76,76 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
 
   if (!clue) return null;
 
-  const handleRotate = () => {
-    sounds.playBeep(650);
-    setRotation(prev => (prev + 90) % 360);
-  };
-
-  const handleToggleHighlight = () => {
-    sounds.playBeep(850);
-    setHighlightSecret(prev => !prev);
-  };
-
-  const handlePlayVoice = () => {
-    setIsPlayingAudio(true);
-    sounds.playBeep(500, 'triangle', 0.2);
+  const handleTriggerLaserScan = () => {
+    sounds.playBeep(1200, 'sawtooth', 0.25);
+    setIsLaserScanning(true);
     setTimeout(() => {
-      sounds.playBeep(600, 'sine', 0.2);
-      setIsPlayingAudio(false);
-    }, 2000);
+      sounds.playBeep(880, 'sine', 0.15);
+      setIsLaserScanning(false);
+      setHighlightSecret(true);
+    }, 2400);
   };
+
+  const has3DModel = ['broken-mug', 'cyanide-vial', 'keycard-override', 'tampered-terminal'].includes(clue.id);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-slate-900 rounded-3xl max-w-2xl w-full shadow-[0_20px_60px_rgba(0,0,0,0.8)] border border-slate-700/80 overflow-hidden flex flex-col max-h-[92vh]">
         
-        {/* Header - Crisp & Clean White Theme */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        {/* Header - Sleek Cyberpunk Forensic Dossier Theme */}
+        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-700 font-mono text-[11px] font-bold">
-                EVIDENCE SPECIMEN #{clue.id.toUpperCase()}
+              <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-400 font-mono text-[11px] font-bold border border-sky-500/30">
+                FORENSIC SPECIMEN #{clue.id.toUpperCase()}
               </span>
-              <span className="text-xs text-slate-500 font-medium">Chain of Custody: Secured</span>
+              <span className="text-xs text-slate-400 font-mono">Chain of Custody: Secured</span>
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mt-1">{clue.title}</h3>
+            <h3 className="text-xl font-bold text-white mt-1">{clue.title}</h3>
           </div>
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold flex items-center justify-center text-sm transition-colors"
+            className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center text-sm transition-colors cursor-pointer"
           >
             ✕
           </button>
         </div>
 
-        {/* Central Clean Specimen Viewport (100% Bright, High Contrast, Readable!) */}
-        <div className="p-6 space-y-4 overflow-y-auto">
+        {/* Central Clean Specimen Viewport (3D Interactive Render vs Document) */}
+        <div className="p-6 space-y-4 overflow-y-auto bg-slate-900">
           
-          <div className="relative min-h-[280px] bg-gradient-to-b from-slate-100 to-slate-200/80 rounded-2xl border-2 border-slate-300 flex items-center justify-center p-6 overflow-hidden shadow-inner">
+          <div className="relative min-h-[300px] bg-gradient-to-b from-slate-950 to-slate-900 rounded-2xl border border-slate-800 flex items-center justify-center p-4 overflow-hidden shadow-inner">
             
-            {/* Viewport Action Controls (Zoom & Rotate) */}
-            <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
-              <button
-                onClick={handleRotate}
-                title="Rotate Specimen"
-                className="p-2 bg-white/90 hover:bg-white text-slate-700 rounded-xl shadow-sm border border-slate-300 text-xs font-semibold flex items-center gap-1 transition-all"
-              >
-                <RotateCw className="w-3.5 h-3.5" /> Rotate
-              </button>
-              <button
-                onClick={() => setZoomLevel(prev => (prev === 1 ? 1.25 : 1))}
-                className="p-2 bg-white/90 hover:bg-white text-slate-700 rounded-xl shadow-sm border border-slate-300 text-xs font-semibold flex items-center gap-1 transition-all"
-              >
-                <Search className="w-3.5 h-3.5" /> {zoomLevel === 1 ? 'Zoom 1.25x' : 'Reset Zoom'}
-              </button>
-            </div>
+            {/* Viewport Action Controls (3D Laser Spectrometer Scan) */}
+            {has3DModel && (
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
+                <button
+                  onClick={handleTriggerLaserScan}
+                  disabled={isLaserScanning}
+                  className="px-3 py-1.5 rounded-xl bg-sky-600/90 hover:bg-sky-500 text-white font-mono text-xs font-bold transition-all shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                >
+                  <ScanLine className={`w-3.5 h-3.5 ${isLaserScanning ? 'animate-spin text-cyan-200' : ''}`} />
+                  <span>{isLaserScanning ? 'SCANNING 3D SPECTRA...' : '3D SPECTRAL SCAN'}</span>
+                </button>
+              </div>
+            )}
 
-            {/* ACTUAL SPECIMEN DISPLAY - BRIGHT, CLEAN & HIGHLY LEGIBLE */}
-            <div 
-              style={{ 
-                transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
-                transition: 'transform 0.3s ease'
-              }}
-              className="w-full flex items-center justify-center"
-            >
-
-              {/* 1. TORN LAB NOTEBOOK PAGE */}
-              {clue.id === 'torn-note' && (
+            {/* ── 3D REAL-TIME WEBGL SPECIMEN VIEWER (FOR MUG, VIAL, KEYCARD) ── */}
+            {has3DModel ? (
+              <div className="w-full h-72">
+                <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 1.2, 3.2], fov: 42 }}>
+                  <OrbitControls enableZoom={true} enablePan={false} minDistance={2} maxDistance={6} />
+                  <ForensicClue3DViewer clueId={clue.id} isScanning={isLaserScanning} />
+                </Canvas>
+                <div className="absolute bottom-3 left-4 text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">
+                  🖱️ Drag to rotate 3D specimen in 360°
+                </div>
+              </div>
+            ) : (
+              /* 1. TORN LAB NOTEBOOK DOCUMENT */
+              <div className="w-full flex items-center justify-center">
                 <div className="w-full max-w-lg bg-[#fffdf0] border-2 border-amber-300/80 rounded-xl p-5 shadow-xl text-slate-900 font-sans relative">
-                  {/* Torn Edge Effect Header */}
                   <div className="flex items-center justify-between border-b-2 border-dashed border-amber-300 pb-2 mb-3">
                     <span className="font-mono text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1">
                       <FileText className="w-4 h-4 text-amber-600" /> Dr. Vincent Vance • Encrypted Lab Notebook
@@ -177,24 +167,21 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
                     </div>
                   ) : riddle ? (
                     <div className="space-y-3">
-                      {/* Code Snippet Box */}
                       <div className="bg-slate-950 p-3 rounded-lg border border-slate-700 font-mono text-[11px] text-emerald-400 shadow-inner">
                         <div className="text-[9px] uppercase tracking-wider text-slate-500 mb-1 flex items-center justify-between">
                           <span>Algorithm Loop Snippet</span>
-                          <span className="text-sky-400 font-bold">JavaScript / Python Trace</span>
+                          <span className="text-sky-400 font-bold">Execution Trace</span>
                         </div>
                         <pre className="overflow-x-auto leading-tight text-slate-200">
                           {riddle.codeSnippet}
                         </pre>
                       </div>
 
-                      {/* Question */}
                       <div className="text-xs font-bold text-slate-800 flex items-start gap-1.5">
                         <HelpCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                         <span>{riddle.question}</span>
                       </div>
 
-                      {/* 4 Interactive Choice Buttons */}
                       <div className="grid grid-cols-2 gap-2">
                         {riddle.options.map((opt, idx) => {
                           const isSelected = selectedOption === idx;
@@ -224,7 +211,6 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
                         })}
                       </div>
 
-                      {/* Action buttons (Verify or Regenerate) */}
                       {!isAnswerCorrect ? (
                         <div className="flex items-center gap-2 pt-1">
                           <button
@@ -244,14 +230,6 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
                         </div>
                       ) : null}
 
-                      {/* Wrong answer error message */}
-                      {answerSubmitted && !isAnswerCorrect && (
-                        <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-[11px] font-mono text-red-700 text-center">
-                          ❌ Incorrect Loop Trace! Re-calculate iterations carefully or try another option.
-                        </div>
-                      )}
-
-                      {/* UNLOCKED: HIGH VISIBILITY PIN FORMULA BOX (ONLY SHOWS AFTER CORRECT ANSWER!) */}
                       {isAnswerCorrect && (
                         <div className="bg-emerald-50 border-2 border-emerald-500 p-3.5 rounded-xl text-center shadow-md animate-fade-in space-y-1">
                           <div className="flex items-center justify-center gap-1.5 text-xs font-mono font-bold text-emerald-800 uppercase">
@@ -269,135 +247,35 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
                               {safePuzzle ? safePuzzle.code : "7492"}
                             </span>
                           </div>
-                          <div className="text-[11px] text-slate-700 font-semibold pt-1">
-                            Use PIN <strong className="text-red-700 font-mono text-xs">{safePuzzle ? safePuzzle.code : "7492"}</strong> on the Wall Safe to get the Keycard!
-                          </div>
                         </div>
                       )}
                     </div>
                   ) : null}
-
-                  {highlightSecret && (
-                    <div className="mt-3 p-2 bg-emerald-100 border border-emerald-300 rounded-lg text-xs font-mono text-emerald-800 animate-pulse text-center">
-                      ✨ Forensic Analysis: Paper fibers verify written by Vincent Vance 2 hours prior to demise.
-                    </div>
-                  )}
                 </div>
-              )}
-
-              {/* 2. LAPTOP TERMINAL */}
-              {clue.id === 'tampered-terminal' && (
-                <div className="w-full max-w-md bg-slate-950 rounded-xl border-2 border-sky-400 p-4 shadow-2xl font-mono text-xs text-sky-300">
-                  <div className="flex items-center justify-between border-b border-sky-800 pb-2 mb-2 text-slate-400 text-[11px]">
-                    <span className="text-sky-400 font-bold">● CEO QUANTUM TERMINAL [11:38 PM]</span>
-                    <span className="text-red-400 font-bold">UNSENT DRAFT</span>
-                  </div>
-                  <div className="space-y-1 text-slate-300">
-                    <div><span className="text-slate-500">To:</span> Board Oversight Committee</div>
-                    <div><span className="text-slate-500">Subject:</span> <strong className="text-amber-300">Patent Theft by VP Evelyn Cross</strong></div>
-                  </div>
-                  <div className="my-2.5 p-3 bg-slate-900 rounded-lg border border-slate-800 text-slate-200 leading-relaxed">
-                    "I have obtained concrete cryptographic evidence that Evelyn liquidated our quantum keys to offshore accounts. I will confront her tonight..."
-                  </div>
-                  <div className="text-emerald-400 text-[11px] font-bold">
-                    ✓ FORENSIC LOG: Unauthorized USB device extracted at 11:39 PM.
-                  </div>
-                </div>
-              )}
-
-              {/* 3. SHATTERED COFFEE MUG */}
-              {clue.id === 'broken-mug' && (
-                <div className="w-full max-w-md bg-white rounded-xl border-2 border-red-300 p-5 shadow-xl text-center space-y-3">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-red-100 border-4 border-red-400 flex items-center justify-center text-3xl shadow-inner">
-                    ☕
-                  </div>
-                  <h4 className="font-bold text-slate-900 text-base">Shattered Espresso Mug Resiude</h4>
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs font-mono text-red-900">
-                    🔬 <strong>Chemical Lab Result:</strong> 99.4% Potassium Cyanide (KCN) concentration detected. Smell matches strong bitter almonds.
-                  </div>
-                </div>
-              )}
-
-              {/* 4. CYANIDE DROPPER */}
-              {clue.id === 'cyanide-vial' && (
-                <div className="w-full max-w-md bg-white rounded-xl border-2 border-purple-300 p-5 shadow-xl text-center space-y-3">
-                  <div className="w-16 h-24 mx-auto rounded-xl bg-purple-100 border-2 border-purple-500 flex items-center justify-center text-2xl shadow-inner">
-                    🧪
-                  </div>
-                  <h4 className="font-bold text-slate-900 text-base">Unlabeled 30ml Glass Dropper</h4>
-                  <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl text-xs font-mono text-purple-900">
-                    🔬 <strong>Lab Finding:</strong> Smudged with fine silk glove fibers. Dropper residue matches the cyanide inside the espresso mug.
-                  </div>
-                </div>
-              )}
-
-              {/* 5. MASTER KEYCARD */}
-              {clue.id === 'keycard-override' && (
-                <div className="w-80 h-44 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 p-4 shadow-2xl border-2 border-yellow-200 text-slate-900 flex flex-col justify-between">
-                  <div className="flex justify-between font-mono text-xs font-bold">
-                    <span>SECURITY OVERRIDE</span>
-                    <span>LEVEL 5</span>
-                  </div>
-                  <div className="text-2xl font-black tracking-widest text-slate-900">MASTER KEYCARD</div>
-                  <div className="text-xs font-mono font-bold text-slate-800">
-                    Use at the Left Blast Door to escape!
-                  </div>
-                </div>
-              )}
-
-            </div>
+              </div>
+            )}
           </div>
 
-          {/* Interactive Action Strip */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleToggleHighlight}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
-                  highlightSecret
-                    ? 'bg-amber-500 text-white shadow-sm'
-                    : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                {highlightSecret ? 'Hide Highlights' : 'Highlight Clue Details'}
-              </button>
-
-              <button
-                onClick={handlePlayVoice}
-                disabled={isPlayingAudio}
-                className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold shadow-sm flex items-center gap-1.5 transition-all"
-              >
-                <Volume2 className={`w-3.5 h-3.5 text-sky-600 ${isPlayingAudio ? 'animate-bounce' : ''}`} />
-                {isPlayingAudio ? 'Playing Tape Audio...' : 'Audio Forensics Tape'}
-              </button>
+          {/* Interactive Chemical / Forensic Findings Strip */}
+          <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono text-slate-400 border-b border-slate-800/80 pb-1.5">
+              <span className="flex items-center gap-1.5 text-sky-400 font-bold">
+                <Radio className="w-3.5 h-3.5 animate-pulse" /> SPECTRAL FORENSIC TELEMETRY
+              </span>
+              <span className="text-emerald-400 font-bold">VERIFIED EVIDENCE</span>
             </div>
-
-            <div className="text-xs text-slate-500 font-medium">
-              Forensic Status: <span className="text-emerald-600 font-bold">Verified ✓</span>
-            </div>
-          </div>
-
-          {/* Forensic Finding Description Card */}
-          <div className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 space-y-1">
-            <div className="text-xs font-bold uppercase tracking-wider text-emerald-900 flex items-center gap-1.5 font-mono">
-              <CheckCircle className="w-4 h-4 text-emerald-600" />
-              Detective Case Analysis:
-            </div>
-            <p className="text-xs text-emerald-800 leading-relaxed font-sans font-medium">
+            
+            <p className="text-xs text-slate-300 font-mono leading-relaxed">
               {clue.secretDetail}
             </p>
-          </div>
-        </div>
 
-        {/* Modal Footer */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm"
-          >
-            Store in Evidence Bag & Close
-          </button>
+            {highlightSecret && (
+              <div className="mt-2 p-2 bg-sky-950/70 border border-sky-500/40 rounded-xl text-xs font-mono text-sky-300 animate-fade-in">
+                ✨ <strong>Chemical Mass Spectrometry:</strong> Trace almond scent corresponds to 99.4% concentrated Potassium Cyanide. Administered within 10 minutes of victim death.
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

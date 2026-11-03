@@ -32,6 +32,7 @@ export interface Suspect {
 }
 
 export interface GameState {
+  currentLevel: 1 | 2 | 3; // 1: Penthouse Suite, 2: Server Vault, 3: Interrogation Cell
   isDoorUnlocked: boolean;
   isSafeOpened: boolean;
   gameStatus: 'intro' | 'investigating' | 'accusing' | 'won' | 'lost';

@@ -13,9 +13,10 @@ import { AccusationExitModal } from './components/AccusationExitModal';
 import { PortfolioModal } from './components/PortfolioModal';
 import { CaseBriefingModal } from './components/CaseBriefingModal';
 import { WaterOrbLoader } from './components/WaterOrbLoader';
+import { ServerVaultScene } from './components/ServerVaultScene';
 import {
   Search, MessageSquare, Key, RotateCcw,
-  ShieldAlert, FileText, Sparkles, Trophy, Skull
+  ShieldAlert, FileText, Sparkles, Trophy, Skull, Server
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -25,7 +26,7 @@ export const App: React.FC = () => {
   const [currentPreloadItem, setCurrentPreloadItem] = useState('Initializing Memory...');
 
   const [currentPuzzle, setCurrentPuzzle] = useState<SafePuzzle>(INITIAL_SAFE_PUZZLE);
-  const [activeTab, setActiveTab] = useState<'scene' | 'interrogation'>('scene');
+  const [activeTab, setActiveTab] = useState<'scene' | 'vault' | 'interrogation'>('scene');
   const [clues, setClues] = useState<ClueItem[]>(() => getInitialClues(INITIAL_SAFE_PUZZLE));
   const [suspects] = useState<Suspect[]>(INITIAL_SUSPECTS);
   const [isSafeModalOpen, setIsSafeModalOpen] = useState(false);
@@ -34,6 +35,7 @@ export const App: React.FC = () => {
   const [isBriefingModalOpen, setIsBriefingModalOpen] = useState(true);
   const [endgameReason, setEndgameReason] = useState('');
   const [gameState, setGameState] = useState<GameState>({
+    currentLevel: 1,
     isDoorUnlocked: false,
     isSafeOpened: false,
     gameStatus: 'investigating',
@@ -114,6 +116,7 @@ export const App: React.FC = () => {
     setCurrentPuzzle(newPuzzle);
     setClues(getInitialClues(newPuzzle));
     setGameState({
+      currentLevel: 1,
       isDoorUnlocked: false, 
       isSafeOpened: false,
       gameStatus: 'investigating', 
@@ -153,7 +156,7 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Center: Clean Segmented Tab Switcher */}
+            {/* Center: 3 Progressive Level Tabs */}
             <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
               <button
                 onClick={() => setActiveTab('scene')}
@@ -164,7 +167,19 @@ export const App: React.FC = () => {
                 }`}
               >
                 <Search className="w-3.5 h-3.5 text-sky-500" />
-                <span>3D Penthouse</span>
+                <span>Level 1: Penthouse</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('vault')}
+                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  activeTab === 'vault'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <Server className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Level 2: Server Vault</span>
               </button>
 
               <button
@@ -176,7 +191,7 @@ export const App: React.FC = () => {
                 }`}
               >
                 <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
-                <span>3D Interrogation</span>
+                <span>Level 3: Interrogation</span>
               </button>
             </div>
 
@@ -275,7 +290,7 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {/* GAME ACTIVE */}
+        {/* GAME ACTIVE WITH 3 PROGRESSIVE INVESTIGATION LEVELS */}
         {gameState.gameStatus === 'investigating' && (
           <div>
             {activeTab === 'scene' ? (
@@ -285,9 +300,16 @@ export const App: React.FC = () => {
                 isSafeOpened={gameState.isSafeOpened}
                 onOpenSafeModal={() => setIsSafeModalOpen(true)}
                 onOpenExitDoorModal={() => setIsExitModalOpen(true)}
-                onGoToInterrogation={() => setActiveTab('interrogation')}
+                onGoToInterrogation={() => setActiveTab('vault')}
                 safePuzzle={currentPuzzle}
                 isBriefingActive={isBriefingModalOpen}
+              />
+            ) : activeTab === 'vault' ? (
+              <ServerVaultScene
+                onBypassComplete={() => {
+                  setGameState(prev => ({ ...prev, currentLevel: 3 }));
+                }}
+                onGoToInterrogation={() => setActiveTab('interrogation')}
               />
             ) : (
               <PrisonInterrogationRoom
