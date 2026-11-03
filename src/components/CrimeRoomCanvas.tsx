@@ -85,7 +85,8 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
 }) => {
   const discoveredClues = clues.filter(c => c.discovered).map(c => c.id);
 
-  const [detectiveTargetPos, setDetectiveTargetPos] = useState<[number, number, number]>([-1.8, 0, 0.4]);
+  // Position Detective Panda facing Maya & Crime Scene correctly
+  const [detectiveTargetPos, setDetectiveTargetPos] = useState<[number, number, number]>([-0.5, 0, 1.2]);
   const [isDetectiveSitting, setIsDetectiveSitting] = useState(false);
   const [hoveredPrompt, setHoveredPrompt] = useState<string | null>(null);
 
