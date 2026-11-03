@@ -169,28 +169,44 @@ export const App: React.FC = () => {
               <span>Level 1: Penthouse</span>
             </button>
 
+            {/* Level 2: Locked until Safe is cracked in Level 1 */}
             <button
-              onClick={() => setActiveTab('vault')}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'vault'
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+              onClick={() => {
+                if (gameState.isSafeOpened) {
+                  setActiveTab('vault');
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                gameState.isSafeOpened
+                  ? activeTab === 'vault'
+                    ? 'bg-indigo-600 text-white shadow-md cursor-pointer'
+                    : 'text-slate-300 hover:text-white cursor-pointer'
+                  : 'text-slate-500 opacity-60 cursor-not-allowed'
               }`}
+              title={gameState.isSafeOpened ? 'Access Server Vault' : '🔒 Crack Penthouse Wall Safe first to unlock Level 2!'}
             >
               <Server className="w-3.5 h-3.5" />
-              <span>Level 2: Server Vault</span>
+              <span>Level 2: Server Vault {!gameState.isSafeOpened && '🔒'}</span>
             </button>
 
+            {/* Level 3: Locked until Server Vault is hacked in Level 2 */}
             <button
-              onClick={() => setActiveTab('interrogation')}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === 'interrogation'
-                  ? 'bg-purple-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+              onClick={() => {
+                if (gameState.currentLevel >= 3) {
+                  setActiveTab('interrogation');
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                gameState.currentLevel >= 3
+                  ? activeTab === 'interrogation'
+                    ? 'bg-purple-600 text-white shadow-md cursor-pointer'
+                    : 'text-slate-300 hover:text-white cursor-pointer'
+                  : 'text-slate-500 opacity-60 cursor-not-allowed'
               }`}
+              title={gameState.currentLevel >= 3 ? 'Access Interrogation' : '🔒 Hack Server Vault Firewalls to unlock Interrogation!'}
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Level 3: Interrogation</span>
+              <span>Level 3: Interrogation {gameState.currentLevel < 3 && '🔒'}</span>
             </button>
           </div>
 
