@@ -16,7 +16,7 @@ import { WaterOrbLoader } from './components/WaterOrbLoader';
 import { ServerVaultScene } from './components/ServerVaultScene';
 import {
   Search, MessageSquare, Key, RotateCcw,
-  ShieldAlert, FileText, Sparkles, Trophy, Skull, Server
+  ShieldAlert, FileText, Trophy, Skull, Server
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -130,7 +130,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="w-screen h-screen overflow-hidden bg-slate-950 relative font-sans select-none">
       {/* ── 3D CIRCULAR WATER FILL PRELOADER ────────────────── */}
       {!isAppLoaded && (
         <WaterOrbLoader 
@@ -139,116 +139,114 @@ export const App: React.FC = () => {
         />
       )}
 
-      {/* ── CLEAN MINIMAL UNIFIED NAVBAR (NO CLUTTER) ───────── */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16 gap-3">
-            
-            {/* Logo */}
-            <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-xs border border-slate-700">
-                <ShieldAlert className="w-4 h-4 text-sky-400" />
-              </div>
-              <div>
-                <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight tracking-tight">
-                  The Midnight Protocol
-                </h1>
-              </div>
+      {/* ── IMMERSIVE FLOATING GAMEPLAY HUD (TRUE FULLSCREEN) ── */}
+      <header className="absolute top-4 inset-x-4 sm:inset-x-6 z-40 pointer-events-none">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          
+          {/* Logo Badge */}
+          <div className="flex items-center gap-2.5 bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 px-3.5 py-2 rounded-2xl shadow-2xl pointer-events-auto">
+            <div className="w-7 h-7 rounded-xl bg-sky-500/20 border border-sky-400/40 flex items-center justify-center">
+              <ShieldAlert className="w-4 h-4 text-sky-400" />
+            </div>
+            <div>
+              <h1 className="font-bold text-white text-xs sm:text-sm leading-tight tracking-tight">
+                The Midnight Protocol
+              </h1>
+            </div>
+          </div>
+
+          {/* Center: 3 Progressive Level Tabs (Floating Glass) */}
+          <div className="flex items-center bg-slate-900/80 backdrop-blur-xl p-1 rounded-2xl border border-slate-700/80 shadow-2xl pointer-events-auto">
+            <button
+              onClick={() => setActiveTab('scene')}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'scene'
+                  ? 'bg-sky-500 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>Level 1: Penthouse</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('vault')}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'vault'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Server className="w-3.5 h-3.5" />
+              <span>Level 2: Server Vault</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('interrogation')}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                activeTab === 'interrogation'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Level 3: Interrogation</span>
+            </button>
+          </div>
+
+          {/* Right: Quick Action Controls */}
+          <div className="flex items-center gap-2 shrink-0 pointer-events-auto">
+            {/* Case Briefing Button */}
+            <button
+              onClick={() => setIsBriefingModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900/80 backdrop-blur-xl text-slate-200 border border-slate-700/80 hover:bg-slate-800 transition-all shadow-xl cursor-pointer"
+            >
+              <FileText className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Case Brief</span>
+            </button>
+
+            {/* Safe Status Button */}
+            <button
+              onClick={() => setIsSafeModalOpen(true)}
+              className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border backdrop-blur-xl shadow-xl transition-all cursor-pointer ${
+                gameState.isSafeOpened
+                  ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300'
+                  : 'bg-amber-950/80 border-amber-500/50 text-amber-300 hover:bg-amber-900/80'
+              }`}
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>
+                {gameState.isSafeOpened 
+                  ? 'Safe Unlocked' 
+                  : clues.find(c => c.id === 'torn-note')?.discovered 
+                    ? `Safe [${gameState.safeCode}]` 
+                    : 'Wall Safe [Locked]'
+                }
+              </span>
+            </button>
+
+            {/* Clues Pill */}
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 rounded-xl text-xs font-mono font-bold text-slate-200 shadow-xl">
+              <span className="text-sky-400">{discoveredCount}</span>
+              <span className="text-slate-500">/</span>
+              <span>{totalClues}</span>
+              <span className="hidden sm:inline text-slate-400 font-sans font-medium text-[11px]">Clues</span>
             </div>
 
-            {/* Center: 3 Progressive Level Tabs */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
-              <button
-                onClick={() => setActiveTab('scene')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'scene'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <Search className="w-3.5 h-3.5 text-sky-500" />
-                <span>Level 1: Penthouse</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('vault')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'vault'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <Server className="w-3.5 h-3.5 text-indigo-500" />
-                <span>Level 2: Server Vault</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('interrogation')}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'interrogation'
-                    ? 'bg-white text-slate-900 shadow-xs'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-purple-600" />
-                <span>Level 3: Interrogation</span>
-              </button>
-            </div>
-
-            {/* Right: Quick Action Controls */}
-            <div className="flex items-center gap-2 shrink-0">
-              {/* Case Briefing Button */}
-              <button
-                onClick={() => setIsBriefingModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-all shadow-xs"
-              >
-                <FileText className="w-3.5 h-3.5 text-slate-600" />
-                <span className="hidden sm:inline">Case Brief</span>
-              </button>
-
-              {/* Safe Status Button - Only shows code if torn-note clue is discovered! */}
-              <button
-                onClick={() => setIsSafeModalOpen(true)}
-                className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-                  gameState.isSafeOpened
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                    : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-                }`}
-              >
-                <Key className="w-3.5 h-3.5" />
-                <span>
-                  {gameState.isSafeOpened 
-                    ? 'Safe Unlocked' 
-                    : clues.find(c => c.id === 'torn-note')?.discovered 
-                      ? `Safe [${gameState.safeCode}]` 
-                      : 'Wall Safe [Locked]'
-                  }
-                </span>
-              </button>
-
-              {/* Clues Pill */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-700">
-                <span className="text-sky-600">{discoveredCount}</span>
-                <span className="text-slate-400">/</span>
-                <span>{totalClues}</span>
-                <span className="hidden sm:inline text-slate-500 font-sans font-medium text-[11px]">Clues</span>
-              </div>
-
-              {/* Reset Button */}
-              <button
-                onClick={handleRestart}
-                className="p-1.5 rounded-xl text-slate-500 hover:bg-slate-100 border border-slate-200 transition-all"
-                title="Restart Game"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            </div>
+            {/* Reset Button */}
+            <button
+              onClick={handleRestart}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-white bg-slate-900/80 backdrop-blur-xl border border-slate-700/80 hover:bg-slate-800 transition-all shadow-xl cursor-pointer"
+              title="Restart Game"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </header>
 
-      {/* ── MAIN CONTENT (IMMERSIVE FULLSCREEN 3D VIEWPORT) ── */}
-      <main className="flex-1 w-full relative overflow-hidden" style={{ height: 'calc(100vh - 64px - 41px)' }}>
+      {/* ── MAIN CONTENT (IMMERSIVE 100% TRUE FULLSCREEN 3D VIEWPORT) ── */}
+      <main className="w-full h-full absolute inset-0 overflow-hidden">
 
         {/* WIN SCREEN */}
         {gameState.gameStatus === 'won' && (
@@ -322,22 +320,6 @@ export const App: React.FC = () => {
           </div>
         )}
       </main>
-
-      {/* ── FOOTER ────────────────────────────────────────── */}
-      <footer className="border-t border-slate-200 bg-white py-3 px-6 mt-auto">
-        <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-sky-500" />
-            <span>Interactive 3D Murder Mystery & Escape Room</span>
-          </span>
-          <button 
-            onClick={() => setIsPortfolioModalOpen(true)}
-            className="hover:text-slate-600 transition-colors underline font-medium"
-          >
-            About & Architecture
-          </button>
-        </div>
-      </footer>
 
       {/* ── ONBOARDING & INTERACTION MODALS ────────────────── */}
       <CaseBriefingModal
