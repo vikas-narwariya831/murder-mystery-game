@@ -178,7 +178,7 @@ function DetectiveAvatar({ targetPos, isSitting }: { targetPos: [number, number,
   const shouldPlaySittingAnim = isSitting && hasReachedChair;
 
   return (
-    <group ref={groupRef} position={[-1, 0, 2.8]} rotation={[0, 0.6, 0]}>
+    <group ref={groupRef} position={[-1, 0, 2.8]}>
       {/* Ground Contact Shadow */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.015, 0]}>
         <circleGeometry args={[0.55, 24]} />
@@ -227,8 +227,8 @@ function ForensicPartnerAvatar({
   return (
     <group 
       ref={partnerGroupRef} 
-      position={[-0.8, 0, 1.8]} 
-      rotation={[0, -2.4, 0]}
+      position={[-2.4, 0, -0.6]} 
+      rotation={[0, 0.8, 0]}
       onClick={handlePartnerInteract}
       onPointerOver={(e) => {
         e.stopPropagation();
