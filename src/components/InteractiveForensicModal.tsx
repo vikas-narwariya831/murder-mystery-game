@@ -266,7 +266,9 @@ export const InteractiveForensicModal: React.FC<ForensicModalProps> = ({ clue, o
             </div>
             
             <p className="text-xs text-slate-300 font-mono leading-relaxed">
-              {clue.secretDetail}
+              {clue.id === 'torn-note' && !isAnswerCorrect
+                ? 'Fragment is heavily encrypted. Solve the algorithmic loop above to decrypt the Wall Safe passcode.'
+                : clue.secretDetail}
             </p>
 
             {highlightSecret && (
