@@ -17,6 +17,7 @@ interface SceneCanvasProps {
   onOpenSafe: () => void;
   onInspectBody: () => void;
   onGoToInterrogation: () => void;
+  isBriefingActive?: boolean;
 }
 
 interface DialogueLine {
@@ -80,7 +81,7 @@ function AssetLoadingWatcher({ onLoaded }: { onLoaded: () => void }) {
 }
 
 export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
-  clues, onInspectClue, isSafeOpened, onOpenSafe, onInspectBody, onGoToInterrogation,
+  clues, onInspectClue, isSafeOpened, onOpenSafe, onInspectBody, onGoToInterrogation, isBriefingActive = false,
 }) => {
   const discoveredClues = clues.filter(c => c.discovered).map(c => c.id);
 
@@ -96,9 +97,9 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
   const [isCutsceneActive, setIsCutsceneActive] = useState(true);
   const [dialogueIndex, setDialogueIndex] = useState(0);
 
-  // Auto-advance cinematic dialogue with Character Voice Audio ONLY when 3D scene is ready!
+  // Auto-advance cinematic dialogue with Character Voice Audio ONLY when 3D scene is ready AND briefing modal is closed!
   useEffect(() => {
-    if (!isCutsceneActive || !isSceneReady) return;
+    if (!isCutsceneActive || !isSceneReady || isBriefingActive) return;
 
     const line = OPENING_CUTSCENE_DIALOGUES[dialogueIndex];
     if (line) {
@@ -114,7 +115,7 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
     }, 6000);
 
     return () => clearTimeout(timer);
-  }, [isCutsceneActive, isSceneReady, dialogueIndex]);
+  }, [isCutsceneActive, isSceneReady, isBriefingActive, dialogueIndex]);
 
   const handleNextDialogue = () => {
     sounds.stopSpeech();

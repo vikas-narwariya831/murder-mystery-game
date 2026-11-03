@@ -12,10 +12,11 @@ interface SceneProps {
   onOpenExitDoorModal?: () => void;
   onGoToInterrogation: () => void;
   safePuzzle?: SafePuzzle;
+  isBriefingActive?: boolean;
 }
 
 export const CrimeScene: React.FC<SceneProps> = ({
-  clues, onDiscoverClue, isSafeOpened, onOpenSafeModal, onGoToInterrogation, safePuzzle,
+  clues, onDiscoverClue, isSafeOpened, onOpenSafeModal, onGoToInterrogation, safePuzzle, isBriefingActive,
 }) => {
   const [inspectClue, setInspectClue] = useState<ClueItem | null>(null);
   const [isVictimModalOpen, setIsVictimModalOpen] = useState(false);
@@ -36,6 +37,7 @@ export const CrimeScene: React.FC<SceneProps> = ({
         onOpenSafe={onOpenSafeModal}
         onInspectBody={() => setIsVictimModalOpen(true)}
         onGoToInterrogation={onGoToInterrogation}
+        isBriefingActive={isBriefingActive}
       />
 
       {/* Interactive Forensic Modal */}

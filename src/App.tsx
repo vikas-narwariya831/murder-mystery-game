@@ -287,6 +287,7 @@ export const App: React.FC = () => {
                 onOpenExitDoorModal={() => setIsExitModalOpen(true)}
                 onGoToInterrogation={() => setActiveTab('interrogation')}
                 safePuzzle={currentPuzzle}
+                isBriefingActive={isBriefingModalOpen}
               />
             ) : (
               <PrisonInterrogationRoom
