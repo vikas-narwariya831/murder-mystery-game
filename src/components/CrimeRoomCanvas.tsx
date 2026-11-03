@@ -2,12 +2,11 @@ import React, { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, useProgress } from '@react-three/drei';
 import { CrimeRoom3D } from './CrimeRoom3D';
+import { Scene3DLoader } from './Scene3DLoader';
 import type { ClueItem } from '../types/game';
 import { 
   Armchair, 
-  FastForward,
-  Loader2,
-  Sparkles
+  FastForward
 } from 'lucide-react';
 import { sounds } from '../services/audioService';
 
@@ -103,7 +102,6 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
 
     const line = OPENING_CUTSCENE_DIALOGUES[dialogueIndex];
     if (line) {
-      // Voice engine speaks the dialogue with distinct character tone
       sounds.speakDialogue(line.text, line.speaker === 'PANDA' ? 'panda' : 'maya');
     }
 
@@ -138,33 +136,21 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
   return (
     <div className="w-full h-full relative" style={{ minHeight: 'calc(100vh - 105px)' }}>
       {/* 3D Canvas Box - Default Immersive Fullscreen Viewport */}
-      <div className="absolute inset-0 bg-slate-900 overflow-hidden">
+      <div className="absolute inset-0 bg-slate-950 overflow-hidden">
 
-        {/* 🚀 SMOOTH PRE-LOADER OVERLAY: Prevents voice desync while 3D models download! */}
+        {/* Top Floating Cyberpunk Status Pill during 3D loading */}
         {!isSceneReady && (
-          <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-white select-none">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-2xl shadow-sky-500/30 mb-6 animate-pulse">
-              <Sparkles className="w-8 h-8 text-white" />
-            </div>
-
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
-              Loading Penthouse Crime Scene...
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mb-6 font-mono text-center max-w-md">
-              Synchronizing 3D textures, forensic physics, and character voices...
-            </p>
-
-            {/* Progress Bar */}
-            <div className="w-64 max-w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700 shadow-inner mb-3">
-              <div 
-                className="bg-gradient-to-r from-sky-400 to-emerald-400 h-full rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${Math.round(progress)}%` }}
-              />
-            </div>
-
-            <div className="flex items-center gap-2 font-mono text-xs text-sky-400">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              <span>{Math.round(progress)}% Loaded</span>
+          <div className="absolute top-5 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+            <div className="bg-slate-900/90 border border-sky-500/40 shadow-[0_0_25px_rgba(56,189,248,0.25)] backdrop-blur-xl px-5 py-2.5 rounded-2xl flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping" />
+              <div className="flex flex-col">
+                <span className="font-mono text-xs font-bold text-sky-300 uppercase tracking-wider">
+                  Penthouse Forensic Stream • {Math.round(progress)}%
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  Loading 3D Models & Audio Sync
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -185,11 +171,11 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
         {/* 3D Realtime WebGL Viewport */}
         <div className="w-full h-full">
           <Canvas shadows dpr={[1, 2]} gl={{ antialias: true }}>
-            <color attach="background" args={['#f8fafc']} />
-            <fog attach="fog" args={['#f8fafc', 22, 45]} />
+            <color attach="background" args={[isSceneReady ? '#f8fafc' : '#030712']} />
+            {isSceneReady && <fog attach="fog" args={['#f8fafc', 22, 45]} />}
             <PerspectiveCamera 
               makeDefault 
-              position={isCutsceneActive ? [-1.2, 3.8, 5.5] : [3, 7, 9]} 
+              position={!isSceneReady ? [0, 2, 6] : isCutsceneActive ? [-1.2, 3.8, 5.5] : [3, 7, 9]} 
               fov={45} 
               near={0.1} 
               far={100} 
@@ -204,10 +190,11 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
               minPolarAngle={Math.PI / 6}
               minAzimuthAngle={-Math.PI * 0.45}
               maxAzimuthAngle={Math.PI * 0.45}
-              target={isCutsceneActive ? [-1.8, 1.2, 0] : isDetectiveSitting ? [2.2, 1.8, 0] : [0.5, 1.5, 0]}
+              target={!isSceneReady ? [0, 1.8, 0] : isCutsceneActive ? [-1.8, 1.2, 0] : isDetectiveSitting ? [2.2, 1.8, 0] : [0.5, 1.5, 0]}
               rotateSpeed={0.5}
             />
-            <Suspense fallback={null}>
+            
+            <Suspense fallback={<Scene3DLoader progress={progress} label="Penthouse Suite 404" />}>
               <AssetLoadingWatcher onLoaded={() => setIsSceneReady(true)} />
               <CrimeRoom3D
                 onInspectClue={onInspectClue}

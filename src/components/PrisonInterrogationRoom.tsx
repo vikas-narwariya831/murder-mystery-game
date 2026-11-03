@@ -2,6 +2,7 @@ import React, { useState, Suspense, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { CinematicInterrogation3D } from './CinematicInterrogation3D';
+import { Scene3DLoader } from './Scene3DLoader';
 import type { Suspect, ClueItem } from '../types/game';
 import { askSuspectAI } from '../services/geminiService';
 import { 
@@ -331,7 +332,7 @@ export const PrisonInterrogationRoom: React.FC<InterrogationRoomProps> = ({
             target={[0.2, 1.45, -0.6]}
             rotateSpeed={0.5}
           />
-          <Suspense fallback={null}>
+          <Suspense fallback={<Scene3DLoader progress={100} label="Interrogation Unit" />}>
             <CinematicInterrogation3D
               suspectId={activeSuspect.id}
               isSpeaking={isLoading}
