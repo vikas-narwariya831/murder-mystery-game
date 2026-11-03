@@ -128,7 +128,6 @@ export const Scene3DLoader: React.FC<Scene3DLoaderProps> = ({
           color="#38bdf8"
           anchorX="center"
           anchorY="middle"
-          font="https://fonts.gstatic.com/s/jetbrainsmono/v18/tDbY2o-flEEny0FZhsfKu5WU4zr3E_ad5bQ.woff"
         >
           {`${displayPercent}%`}
         </Text>
