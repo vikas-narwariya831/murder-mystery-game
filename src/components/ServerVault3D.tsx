@@ -92,11 +92,33 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
   const screenGlowRef = useRef<THREE.PointLight>(null);
   const keycardRef = useRef<THREE.Group>(null);
   const safeVaultDoorRef = useRef<THREE.Group>(null);
+  const pandaGroupRef = useRef<THREE.Group>(null);
+
+  // Panda walk-in animation state: walks from corridor entry to operator chair
+  const [hasReachedChair, setHasReachedChair] = React.useState(false);
+  const pandaCurrentPos = useRef(new THREE.Vector3(0, 0, 4.8)); // Starts from corridor entrance
+  const pandaTargetPos = useMemo(() => new THREE.Vector3(0, 0, 1.55), []);
 
   const binaryTexture = useBinaryMatrixTexture(isHacking, isBreached);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
+
+    // Smooth walk-in interpolation for Detective Panda
+    if (!hasReachedChair && pandaGroupRef.current) {
+      const dist = pandaCurrentPos.current.distanceTo(pandaTargetPos);
+      if (dist > 0.08) {
+        const dir = new THREE.Vector3().subVectors(pandaTargetPos, pandaCurrentPos.current).normalize();
+        pandaCurrentPos.current.addScaledVector(dir, delta * 2.2);
+        pandaGroupRef.current.position.copy(pandaCurrentPos.current);
+        pandaGroupRef.current.rotation.y = 0; // Walk forward towards desk
+      } else {
+        pandaCurrentPos.current.copy(pandaTargetPos);
+        pandaGroupRef.current.position.copy(pandaTargetPos);
+        pandaGroupRef.current.rotation.y = 0; // Face computer screens
+        setHasReachedChair(true);
+      }
+    }
 
     // Floating Hologram above terminal
     if (centralHoloRef.current) {
@@ -488,15 +510,15 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         </group>
       </group>
 
-      {/* ── DETECTIVE PANDA HACKING AT THE CONSOLE (PERFECT SEATED POSITION) ── */}
-      <group position={[0, 0, 1.55]}>
+      {/* ── DETECTIVE PANDA: WALKS IN FROM DOOR AND SITS AT DESK ── */}
+      <group ref={pandaGroupRef} position={[0, 0, 4.8]}>
         <PandaDetective 
           position={[0, 0, 0]}
           rotation={[0, Math.PI, 0]}
           scale={0.0105}
-          isSitting={!isHacking}
-          isHacking={isHacking}
-          isWalking={false}
+          isWalking={!hasReachedChair}
+          isSitting={hasReachedChair && !isHacking}
+          isHacking={hasReachedChair && isHacking}
         />
       </group>
     </group>
