@@ -18,7 +18,7 @@ export const WaterOrbLoader: React.FC<WaterOrbLoaderProps> = ({ progress, item }
 
       {/* Header Badge */}
       <div className="flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 shadow-lg backdrop-blur-md animate-fade-in">
-        <ShieldAlert className="w-4 h-4 text-red-500" />
+        <ShieldAlert className="w-4 h-4 text-cyan-400" />
         <span className="text-[11px] font-mono tracking-widest text-slate-300 font-bold uppercase">
           CYBERSECURITY PROTOCOL 404 • ASSET PRELOAD
         </span>

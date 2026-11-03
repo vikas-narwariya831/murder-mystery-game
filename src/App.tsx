@@ -143,8 +143,8 @@ export const App: React.FC = () => {
             
             {/* Logo */}
             <div className="flex items-center gap-2.5 shrink-0">
-              <div className="w-8 h-8 rounded-xl bg-red-600 flex items-center justify-center shadow-xs">
-                <ShieldAlert className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-xl bg-slate-900 flex items-center justify-center shadow-xs border border-slate-700">
+                <ShieldAlert className="w-4 h-4 text-sky-400" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900 text-sm sm:text-base leading-tight tracking-tight">
@@ -185,9 +185,9 @@ export const App: React.FC = () => {
               {/* Case Briefing Button */}
               <button
                 onClick={() => setIsBriefingModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all shadow-xs"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 transition-all shadow-xs"
               >
-                <FileText className="w-3.5 h-3.5 text-red-600" />
+                <FileText className="w-3.5 h-3.5 text-slate-600" />
                 <span className="hidden sm:inline">Case Brief</span>
               </button>
 
@@ -304,7 +304,7 @@ export const App: React.FC = () => {
       <footer className="border-t border-slate-200 bg-white py-3 px-6 mt-auto">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs text-slate-400">
           <span className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-red-500" />
+            <Sparkles className="w-3.5 h-3.5 text-sky-500" />
             <span>Interactive 3D Murder Mystery & Escape Room</span>
           </span>
           <button 
