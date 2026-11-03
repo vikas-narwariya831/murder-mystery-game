@@ -1,12 +1,13 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, useProgress } from '@react-three/drei';
 import { CrimeRoom3D } from './CrimeRoom3D';
 import type { ClueItem } from '../types/game';
 import { 
   Armchair, 
-  Navigation,
-  FastForward
+  FastForward,
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import { sounds } from '../services/audioService';
 
@@ -63,6 +64,22 @@ const OPENING_CUTSCENE_DIALOGUES: DialogueLine[] = [
   },
 ];
 
+// 3D Scene Loading Tracker Component
+function AssetLoadingWatcher({ onLoaded }: { onLoaded: () => void }) {
+  const { progress, active } = useProgress();
+
+  useEffect(() => {
+    if (!active && progress >= 100) {
+      const timer = setTimeout(() => {
+        onLoaded();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [progress, active, onLoaded]);
+
+  return null;
+}
+
 export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
   clues, onInspectClue, isSafeOpened, onOpenSafe, onInspectBody, onGoToInterrogation,
 }) => {
@@ -72,13 +89,17 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
   const [isDetectiveSitting, setIsDetectiveSitting] = useState(false);
   const [hoveredPrompt, setHoveredPrompt] = useState<string | null>(null);
 
+  // Asset ready gate: do NOT start cutscene or speech until 3D room is 100% loaded!
+  const [isSceneReady, setIsSceneReady] = useState(false);
+  const { progress } = useProgress();
+
   // Cinematic opening sequence state
   const [isCutsceneActive, setIsCutsceneActive] = useState(true);
   const [dialogueIndex, setDialogueIndex] = useState(0);
 
-  // Auto-advance cinematic dialogue with Character Voice Audio
+  // Auto-advance cinematic dialogue with Character Voice Audio ONLY when 3D scene is ready!
   useEffect(() => {
-    if (!isCutsceneActive) return;
+    if (!isCutsceneActive || !isSceneReady) return;
 
     const line = OPENING_CUTSCENE_DIALOGUES[dialogueIndex];
     if (line) {
@@ -92,10 +113,10 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
       } else {
         setIsCutsceneActive(false);
       }
-    }, 5500);
+    }, 6000);
 
     return () => clearTimeout(timer);
-  }, [isCutsceneActive, dialogueIndex]);
+  }, [isCutsceneActive, isSceneReady, dialogueIndex]);
 
   const handleNextDialogue = () => {
     sounds.stopSpeech();
@@ -117,10 +138,39 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
   return (
     <div className="w-full h-full relative" style={{ minHeight: 'calc(100vh - 105px)' }}>
       {/* 3D Canvas Box - Default Immersive Fullscreen Viewport */}
-      <div className="absolute inset-0 bg-slate-100 overflow-hidden">
+      <div className="absolute inset-0 bg-slate-900 overflow-hidden">
+
+        {/* 🚀 SMOOTH PRE-LOADER OVERLAY: Prevents voice desync while 3D models download! */}
+        {!isSceneReady && (
+          <div className="absolute inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 text-white select-none">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center shadow-2xl shadow-sky-500/30 mb-6 animate-pulse">
+              <Sparkles className="w-8 h-8 text-white" />
+            </div>
+
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
+              Loading Penthouse Crime Scene...
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 mb-6 font-mono text-center max-w-md">
+              Synchronizing 3D textures, forensic physics, and character voices...
+            </p>
+
+            {/* Progress Bar */}
+            <div className="w-64 max-w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700 shadow-inner mb-3">
+              <div 
+                className="bg-gradient-to-r from-sky-400 to-emerald-400 h-full rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${Math.round(progress)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center gap-2 font-mono text-xs text-sky-400">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>{Math.round(progress)}% Loaded</span>
+            </div>
+          </div>
+        )}
         
         {/* Subtle Floating Controls (Top Right: Sit/Stand) */}
-        {!isCutsceneActive && (
+        {!isCutsceneActive && isSceneReady && (
           <div className="absolute top-4 right-4 z-20 pointer-events-auto flex items-center gap-2">
             <button
               onClick={() => setIsDetectiveSitting(!isDetectiveSitting)}
@@ -146,8 +196,8 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
             />
             <OrbitControls
               enablePan={false}
-              enableZoom={!isCutsceneActive}
-              enableRotate={!isCutsceneActive}
+              enableZoom={!isCutsceneActive && isSceneReady}
+              enableRotate={!isCutsceneActive && isSceneReady}
               minDistance={4}
               maxDistance={14}
               maxPolarAngle={Math.PI / 2.15}
@@ -158,6 +208,7 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
               rotateSpeed={0.5}
             />
             <Suspense fallback={null}>
+              <AssetLoadingWatcher onLoaded={() => setIsSceneReady(true)} />
               <CrimeRoom3D
                 onInspectClue={onInspectClue}
                 onOpenSafe={onOpenSafe}
@@ -174,9 +225,9 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
             </Suspense>
           </Canvas>
 
-          {/* 🎬 AAA CINEMATIC DIALOGUE OVERLAY (When Cutscene is Active) */}
-          {isCutsceneActive ? (
-            <div className="absolute inset-0 pointer-events-auto flex flex-col justify-between z-30 select-none">
+          {/* 🎬 AAA CINEMATIC DIALOGUE OVERLAY (When Cutscene is Active AND 3D Scene is Ready!) */}
+          {isCutsceneActive && isSceneReady ? (
+            <div className="absolute inset-0 pointer-events-auto flex flex-col justify-between z-30 select-none animate-fade-in">
               {/* Top Letterbox Bar with Cinematic Badge & Skip */}
               <div className="h-14 bg-gradient-to-b from-black via-black/80 to-transparent flex items-center justify-between px-6 text-white">
                 <div className="flex items-center gap-2">
@@ -248,15 +299,15 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
 
                   {/* Progress Indicators */}
                   <div className="flex items-center justify-center gap-1.5 mt-2.5 pt-1.5 border-t border-white/10">
-                    {OPENING_CUTSCENE_DIALOGUES.map((_, idx) => (
-                      <div 
-                        key={idx}
+                    {OPENING_CUTSCENE_DIALOGUES.map((_, i) => (
+                      <div
+                        key={i}
                         className={`h-1 rounded-full transition-all duration-300 ${
-                          idx === dialogueIndex 
-                            ? 'w-7 bg-amber-400 shadow-[0_0_8px_#f59e0b]' 
-                            : idx < dialogueIndex 
-                            ? 'w-2.5 bg-emerald-400 shadow-[0_0_6px_#10b981]' 
-                            : 'w-2.5 bg-white/20'
+                          i === dialogueIndex
+                            ? 'w-6 bg-amber-400'
+                            : i < dialogueIndex
+                            ? 'w-2 bg-emerald-500'
+                            : 'w-2 bg-white/20'
                         }`}
                       />
                     ))}
@@ -264,18 +315,13 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
                 </div>
               </div>
             </div>
-          ) : (
-            /* Clean Action Reticle HUD (Minimalist, disappears or shows context) */
-            <div className="absolute bottom-4 inset-x-0 flex justify-center pointer-events-none z-20 px-4">
-              <div className={`px-4 py-2 rounded-2xl backdrop-blur-md border shadow-lg transition-all duration-200 flex items-center gap-2 ${
-                hoveredPrompt
-                  ? 'bg-white border-2 border-sky-500 text-slate-900 scale-105'
-                  : 'bg-white/90 border border-slate-200 text-slate-600'
-              }`}>
-                <Navigation className="w-3.5 h-3.5 text-sky-500 animate-pulse" />
-                <span className="font-mono text-xs font-semibold">
-                  {hoveredPrompt || "Click floor to walk · Click clues to inspect · Drag to rotate"}
-                </span>
+          ) : null}
+
+          {/* Interactive Floating Hover Prompt (When exploring the scene) */}
+          {hoveredPrompt && !isCutsceneActive && isSceneReady && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+              <div className="bg-slate-900/90 text-white text-xs font-medium px-4 py-2 rounded-xl border border-slate-700 shadow-xl backdrop-blur-md flex items-center gap-2">
+                <span>{hoveredPrompt}</span>
               </div>
             </div>
           )}
