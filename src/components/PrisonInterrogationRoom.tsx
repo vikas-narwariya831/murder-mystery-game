@@ -255,7 +255,7 @@ export const PrisonInterrogationRoom: React.FC<InterrogationRoomProps> = ({
   const currentQuestions = SUSPECT_STAGES[activeSuspect.id]?.[currentStageIndex] || [];
 
   return (
-    <div className="w-full h-full relative overflow-hidden bg-slate-900 select-none" style={{ minHeight: 'calc(100vh - 105px)' }}>
+    <div className="w-full h-full relative overflow-hidden bg-slate-900 select-none">
       
       {/* ── TOP SLENDER FLOATING HEADER HUD ── */}
       <div className="absolute top-0 inset-x-0 z-20 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-4 py-2.5 flex items-center justify-between pointer-events-auto">

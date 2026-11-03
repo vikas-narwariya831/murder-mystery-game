@@ -135,7 +135,7 @@ export const CrimeRoomCanvas: React.FC<SceneCanvasProps> = ({
   const currentDialogue = OPENING_CUTSCENE_DIALOGUES[dialogueIndex];
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: 'calc(100vh - 105px)' }}>
+    <div className="w-full h-full relative">
       {/* 3D Canvas Box - Default Immersive Fullscreen Viewport */}
       <div className="absolute inset-0 bg-slate-950 overflow-hidden">
 

@@ -66,7 +66,7 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
   };
 
   return (
-    <div className="w-full h-full relative bg-slate-900 overflow-hidden select-none" style={{ minHeight: 'calc(100vh - 105px)' }}>
+    <div className="w-full h-full relative bg-slate-900 overflow-hidden select-none">
       
       {/* ── REAL 3D WEBGL CYBER HACKING VAULT VIEWPORT ── */}
       <div className="absolute inset-0">
