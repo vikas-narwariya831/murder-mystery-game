@@ -10,6 +10,7 @@ interface PandaDetectiveProps {
   rotation?: [number, number, number];
   isWalking?: boolean;
   isSitting?: boolean;
+  isHacking?: boolean;
 }
 
 export const PandaDetective: React.FC<PandaDetectiveProps> = ({
@@ -18,6 +19,7 @@ export const PandaDetective: React.FC<PandaDetectiveProps> = ({
   rotation = [0, 0, 0],
   isWalking = false,
   isSitting = false,
+  isHacking = false,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const fbx = useFBX('/Panda_Character.fbx');
@@ -133,30 +135,38 @@ export const PandaDetective: React.FC<PandaDetectiveProps> = ({
     }
   }, [clonedModel]);
 
-  // Switch between Walk, Sit, and Idle animations smoothly
+  // Switch between Walk, Sit, Hacking, and Idle animations smoothly
   useEffect(() => {
-    // Prefer authentic PandaIdle2 for a clean upright standing posture without unnatural hunching
+    // If hacking is active, play high-speed typing/interacting action
     const currentAction = isWalking
       ? (actions['PandaWalk'] || actions['PandaRun'])
+      : isHacking
+      ? (actions['PandaAttack1'] || actions['PandaFightingStance'] || actions['PandaSittingIdle'])
       : isSitting
       ? (actions['PandaSittingIdle'] || actions['PandaSitting'])
       : (actions['PandaIdle2'] || actions['PandaIdle1']);
 
     if (!currentAction) return;
 
+    if (isHacking) {
+      currentAction.timeScale = 1.6; // High-speed intense cyber typing
+    } else {
+      currentAction.timeScale = 1.0;
+    }
+
     // Fade out all other actions and play current one
     Object.values(actions).forEach((act) => {
       if (act !== currentAction) {
-        act.fadeOut(0.25);
+        act.fadeOut(0.2);
       }
     });
 
-    currentAction.reset().fadeIn(0.25).play();
+    currentAction.reset().fadeIn(0.2).play();
 
     return () => {
       currentAction.fadeOut(0.2);
     };
-  }, [isWalking, isSitting, actions]);
+  }, [isWalking, isSitting, isHacking, actions]);
 
   // Advance animation frames and cigarette smoke particles
   useFrame((state, delta) => {
