@@ -42,20 +42,25 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
   const allSolved = nodes.every(n => n.solved);
   const solvedNodeIds = nodes.filter(n => n.solved).map(n => n.id);
 
+  const [isHacking, setIsHacking] = useState(false);
+
   const handleTune = (delta: number) => {
     sounds.playBeep(currentVal + delta, 'sine', 0.05);
+    setIsHacking(true);
+    setTimeout(() => setIsHacking(false), 800);
     const newVal = Math.max(50, Math.min(1000, currentVal + delta));
     setCurrentVal(newVal);
 
     const targetNode = nodes.find(n => n.id === activeNode);
     if (targetNode && Math.abs(newVal - targetNode.target) < 30 && !targetNode.solved) {
       sounds.playSafeSuccess();
+      sounds.speakDialogue("Firewall breached! The Vault safe is opening. Master keycard exposed!", "panda");
       setNodes(prev => prev.map(n => n.id === activeNode ? { ...n, solved: true } : n));
       setTerminalLogs(prev => [
         `[FIREWALL BREACHED]: Node #0${activeNode} (${targetNode.name}) decrypted successfully!`,
         ...prev.slice(0, 5)
       ]);
-      confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+      confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
       onBypassComplete();
     }
   };
@@ -82,6 +87,7 @@ export const ServerVaultScene: React.FC<ServerVaultProps> = ({
             activeNode={activeNode} 
             solvedNodes={solvedNodeIds} 
             isBreached={allSolved} 
+            isHacking={isHacking}
           />
         </Canvas>
       </div>

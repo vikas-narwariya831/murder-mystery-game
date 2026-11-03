@@ -2,22 +2,27 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
+import { PandaDetective } from './PandaDetective';
 
 interface ServerVault3DProps {
   activeNode: number;
   solvedNodes: number[];
   isBreached: boolean;
+  isHacking?: boolean;
 }
 
 export const ServerVault3D: React.FC<ServerVault3DProps> = ({
   activeNode,
   solvedNodes,
   isBreached,
+  isHacking = false,
 }) => {
   const centralHoloRef = useRef<THREE.Group>(null);
   const ring1Ref = useRef<THREE.Mesh>(null);
   const ring2Ref = useRef<THREE.Mesh>(null);
   const screenGlowRef = useRef<THREE.PointLight>(null);
+  const keycardRef = useRef<THREE.Group>(null);
+  const safeVaultDoorRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
@@ -38,9 +43,26 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
       ring2Ref.current.rotation.z = t * 1.1;
     }
 
-    // Screen light pulse
+    // Screen light pulse (faster when actively hacking)
     if (screenGlowRef.current) {
-      screenGlowRef.current.intensity = 1.2 + Math.sin(t * 4) * 0.2;
+      const pulseSpeed = isHacking ? 12 : 4;
+      screenGlowRef.current.intensity = (isHacking ? 2.5 : 1.4) + Math.sin(t * pulseSpeed) * 0.3;
+    }
+
+    // Floating Master Keycard inside Safe / Vault
+    if (keycardRef.current) {
+      keycardRef.current.rotation.y = t * 1.5;
+      keycardRef.current.position.y = (isBreached ? 2.0 : 1.4) + Math.sin(t * 3) * 0.08;
+    }
+
+    // Vault Door Swing open when breached
+    if (safeVaultDoorRef.current) {
+      const targetRot = isBreached ? -Math.PI * 0.6 : 0;
+      safeVaultDoorRef.current.rotation.y = THREE.MathUtils.lerp(
+        safeVaultDoorRef.current.rotation.y,
+        targetRot,
+        0.05
+      );
     }
   });
 
@@ -52,7 +74,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
       <directionalLight position={[-8, 12, -4]} intensity={2.6} color="#f0f9ff" />
       <pointLight 
         position={[0, 4.2, 0]} 
-        intensity={isBreached ? 30 : 20} 
+        intensity={isBreached ? 35 : 20} 
         color={isBreached ? '#10b981' : '#0284c7'} 
         distance={22} 
       />
@@ -72,7 +94,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         </group>
       ))}
 
-      {/* ── CLEAN ARCHITECTURAL RAISED TILED FLOOR (Light Gray / Off-White Datacenter Tile) ── */}
+      {/* ── CLEAN ARCHITECTURAL RAISED TILED FLOOR ── */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[26, 22]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.3} metalness={0.2} />
@@ -80,13 +102,12 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
       {/* Clean Gray Floor Seam Grid Lines */}
       <gridHelper args={[26, 26, '#94a3b8', '#cbd5e1']} position={[0, 0.005, 0]} />
 
-      {/* ── CLEAN MODERN SERVER ROOM WALLS (Off-white / Warm Gray Tech Walls) ── */}
+      {/* ── CLEAN MODERN SERVER ROOM WALLS ── */}
       {/* Back Wall with Aluminum Wall Skirting */}
       <mesh position={[0, 3, -6.5]} receiveShadow>
         <planeGeometry args={[26, 7]} />
         <meshStandardMaterial color="#e2e8f0" roughness={0.5} metalness={0.1} />
       </mesh>
-      {/* Brushed Aluminum Skirting Board */}
       <mesh position={[0, 0.2, -6.48]}>
         <boxGeometry args={[26, 0.35, 0.04]} />
         <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.3} />
@@ -103,22 +124,21 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         <meshStandardMaterial color="#e2e8f0" roughness={0.5} metalness={0.1} />
       </mesh>
 
-      {/* ── 3D SERVER TOWER RACKS (Brushed Platinum / Silver Datacenter Cabinets) ── */}
+      {/* ── 3D SERVER TOWER RACKS (Brushed Platinum / Silver Cabinets) ── */}
       {[-4.8, -2.6, 2.6, 4.8].map((xPos, idx) => {
         const isRackActive = (activeNode === 1 && idx === 0) || (activeNode === 2 && idx === 1) || (activeNode === 3 && idx === 2);
         const isRackSolved = solvedNodes.includes(idx + 1);
 
         return (
           <group key={idx} position={[xPos, 0, -2.4]}>
-            {/* Server Rack Modern Platinum-Silver Chassis */}
+            {/* Server Rack Solid Chassis */}
             <RoundedBox args={[1.5, 4.2, 1.3]} radius={0.05} smoothness={4} position={[0, 2.1, 0]} castShadow receiveShadow>
               <meshStandardMaterial color="#475569" metalness={0.85} roughness={0.25} />
             </RoundedBox>
 
-            {/* Front Server Blade Unit Drawers (Visible Aluminum Shelves) */}
+            {/* Front Server Blade Unit Drawers */}
             {[0.6, 1.2, 1.8, 2.4, 3.0, 3.6].map((y, slotIdx) => (
               <group key={slotIdx} position={[0, y, 0.64]}>
-                {/* Horizontal Blade Module Faceplate */}
                 <mesh>
                   <planeGeometry args={[1.32, 0.48]} />
                   <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} />
@@ -171,7 +191,91 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         );
       })}
 
-      {/* ── CENTRAL MASTER WORKSTATION & DESK (MAIN PC CONSOLE) ── */}
+      {/* ── HEAVY TITANIUM DATA VAULT SAFE (IN WALL / FLOOR) ── */}
+      <group position={[0, 1.4, -6.1]}>
+        {/* Vault Frame Embedded into Back Wall */}
+        <RoundedBox args={[2.2, 2.2, 0.6]} radius={0.06} smoothness={4} castShadow receiveShadow>
+          <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.2} />
+        </RoundedBox>
+
+        {/* Vault Interior Chamber */}
+        <mesh position={[0, 0, 0.05]}>
+          <boxGeometry args={[1.8, 1.8, 0.4]} />
+          <meshStandardMaterial color="#0f172a" roughness={0.8} />
+        </mesh>
+
+        {/* Interior Vault Light */}
+        <pointLight 
+          position={[0, 0.6, 0.2]} 
+          intensity={isBreached ? 12 : 2} 
+          color={isBreached ? '#10b981' : '#f59e0b'} 
+          distance={3} 
+        />
+
+        {/* ── FLOATING HACKED MASTER KEYCARD INSIDE VAULT ── */}
+        <group ref={keycardRef} position={[0, 0, 0.2]}>
+          {/* Titanium RFID Card Body */}
+          <RoundedBox args={[0.65, 0.42, 0.02]} radius={0.015} smoothness={3} castShadow>
+            <meshStandardMaterial 
+              color={isBreached ? '#fef08a' : '#94a3b8'} 
+              metalness={0.9} 
+              roughness={0.15} 
+              emissive={isBreached ? '#f59e0b' : '#000000'}
+              emissiveIntensity={isBreached ? 0.8 : 0}
+            />
+          </RoundedBox>
+          {/* Gold Microchip */}
+          <mesh position={[-0.15, 0, 0.012]}>
+            <planeGeometry args={[0.16, 0.14]} />
+            <meshStandardMaterial color="#fbbf24" metalness={0.95} roughness={0.1} />
+          </mesh>
+          {/* Magnetic Stripe */}
+          <mesh position={[0, 0.1, -0.012]} rotation={[0, Math.PI, 0]}>
+            <planeGeometry args={[0.63, 0.08]} />
+            <meshStandardMaterial color="#1e293b" metalness={0.5} roughness={0.3} />
+          </mesh>
+        </group>
+
+        {/* ── HEAVY REINFORCED VAULT DOOR (SWINGS OPEN) ── */}
+        <group ref={safeVaultDoorRef} position={[-0.95, 0, 0.3]}>
+          {/* Main Door Slab */}
+          <RoundedBox args={[1.9, 2.0, 0.2]} radius={0.04} smoothness={4} position={[0.95, 0, 0]} castShadow>
+            <meshStandardMaterial color="#475569" metalness={0.9} roughness={0.25} />
+          </RoundedBox>
+
+          {/* Heavy Chrome Vault Locking Dial & Wheel */}
+          <group position={[0.95, 0, 0.12]}>
+            {/* Outer Rim Ring */}
+            <mesh>
+              <torusGeometry args={[0.35, 0.04, 16, 32]} />
+              <meshStandardMaterial color="#cbd5e1" metalness={0.95} roughness={0.1} />
+            </mesh>
+            {/* Dial 3-Spoke Handle */}
+            {[0, (2 * Math.PI) / 3, (4 * Math.PI) / 3].map((rad, sIdx) => (
+              <mesh key={sIdx} rotation={[0, 0, rad]}>
+                <cylinderGeometry args={[0.025, 0.025, 0.6, 12]} />
+                <meshStandardMaterial color="#e2e8f0" metalness={0.95} roughness={0.1} />
+              </mesh>
+            ))}
+            {/* Center Dial Hub */}
+            <mesh position={[0, 0, 0.03]}>
+              <cylinderGeometry args={[0.12, 0.12, 0.08, 24]} />
+              <meshStandardMaterial color="#64748b" metalness={0.9} />
+            </mesh>
+            {/* Digital Security Status LED */}
+            <mesh position={[0, 0.6, 0]}>
+              <sphereGeometry args={[0.04, 12, 12]} />
+              <meshStandardMaterial 
+                color={isBreached ? '#10b981' : '#ef4444'} 
+                emissive={isBreached ? '#10b981' : '#ef4444'} 
+                emissiveIntensity={2.5} 
+              />
+            </mesh>
+          </group>
+        </group>
+      </group>
+
+      {/* ── CENTRAL MASTER WORKSTATION & DESK ── */}
       <group position={[0, 0, 0.8]}>
         {/* Sleek Contemporary White/Aluminum Command Desk */}
         <RoundedBox args={[3.2, 0.12, 1.4]} radius={0.04} smoothness={4} position={[0, 0.9, 0]} castShadow receiveShadow>
@@ -194,16 +298,13 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
         {/* ── MAIN HIGH-TECH PC SYSTEM TOWER ON DESK ── */}
         <group position={[1.2, 1.35, 0]}>
-          {/* PC Chassis (Brushed Silver Aluminium) */}
           <RoundedBox args={[0.32, 0.72, 0.62]} radius={0.03} smoothness={4} castShadow>
             <meshStandardMaterial color="#64748b" metalness={0.9} roughness={0.2} />
           </RoundedBox>
-          {/* Glass Side Panel */}
           <mesh position={[-0.165, 0, 0]}>
             <planeGeometry args={[0.56, 0.66]} />
             <meshPhysicalMaterial color="#38bdf8" emissive="#0284c7" emissiveIntensity={0.8} transparent opacity={0.6} />
           </mesh>
-          {/* Cooling Fans */}
           {[0.15, -0.15].map((fy, fi) => (
             <mesh key={fi} position={[0, fy, 0.315]}>
               <cylinderGeometry args={[0.09, 0.09, 0.02, 16]} />
@@ -215,20 +316,17 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         {/* ── DUAL ULTRAWIDE HACKING MONITORS ── */}
         {/* Center Main PC Monitor */}
         <group position={[0, 1.45, -0.1]}>
-          {/* Monitor Screen Frame */}
           <RoundedBox args={[1.5, 0.85, 0.06]} radius={0.02} smoothness={3} castShadow>
             <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} />
           </RoundedBox>
-          {/* Glowing Active Cyber Hacking Display Screen */}
           <mesh position={[0, 0, 0.035]}>
             <planeGeometry args={[1.44, 0.79]} />
             <meshStandardMaterial 
               color={isBreached ? '#064e3b' : '#0369a1'} 
               emissive={isBreached ? '#10b981' : '#0284c7'} 
-              emissiveIntensity={1.2} 
+              emissiveIntensity={isHacking ? 2.0 : 1.2} 
             />
           </mesh>
-          {/* Stand & Base */}
           <mesh position={[0, -0.48, 0]}>
             <cylinderGeometry args={[0.04, 0.04, 0.35, 12]} />
             <meshStandardMaterial color="#94a3b8" metalness={0.9} />
@@ -260,24 +358,21 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
 
         {/* Keyboard & Mouse Pad */}
         <group position={[0, 0.98, 0.3]}>
-          {/* Keyboard Body */}
           <mesh position={[-0.1, 0, 0]}>
             <boxGeometry args={[0.7, 0.025, 0.24]} />
             <meshStandardMaterial color="#cbd5e1" metalness={0.5} roughness={0.4} />
           </mesh>
-          {/* Keycaps Glow */}
           <mesh position={[-0.1, 0.015, 0]}>
             <planeGeometry args={[0.66, 0.2]} />
-            <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={1.2} />
+            <meshStandardMaterial color="#0284c7" emissive="#0284c7" emissiveIntensity={isHacking ? 2.5 : 1.2} />
           </mesh>
-          {/* Ergonomic Mouse */}
           <mesh position={[0.42, 0.015, 0]}>
             <capsuleGeometry args={[0.035, 0.07, 4, 8]} />
             <meshStandardMaterial color="#0284c7" metalness={0.5} />
           </mesh>
         </group>
 
-        {/* Ambient screen bounce light onto desk */}
+        {/* Ambient screen bounce light */}
         <pointLight 
           ref={screenGlowRef} 
           position={[0, 1.5, 0.5]} 
@@ -286,7 +381,7 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
           distance={4} 
         />
 
-        {/* ── HOLOGRAPHIC QUANTUM NODE PROJECTION ABOVE DESK ── */}
+        {/* ── HOLOGRAPHIC QUANTUM CIPHER PROJECTION ABOVE DESK ── */}
         <group ref={centralHoloRef} position={[0, 2.5, -0.1]}>
           <mesh>
             <octahedronGeometry args={[0.45, 0]} />
@@ -318,25 +413,15 @@ export const ServerVault3D: React.FC<ServerVault3DProps> = ({
         </group>
       </group>
 
-      {/* ── HIGH-TECH OPERATOR SWIVEL CHAIR (Steel & Slate) ── */}
-      <group position={[0, 0, 2.2]} rotation={[0, Math.PI, 0]}>
-        {/* Seat cushion */}
-        <RoundedBox args={[0.7, 0.1, 0.65]} radius={0.03} smoothness={3} position={[0, 0.65, 0]} castShadow>
-          <meshStandardMaterial color="#475569" roughness={0.6} />
-        </RoundedBox>
-        {/* Backrest */}
-        <RoundedBox args={[0.65, 0.9, 0.1]} radius={0.04} smoothness={3} position={[0, 1.15, -0.3]} castShadow>
-          <meshStandardMaterial color="#334155" roughness={0.5} />
-        </RoundedBox>
-        {/* Hydraulic Stem & Base */}
-        <mesh position={[0, 0.35, 0]}>
-          <cylinderGeometry args={[0.04, 0.04, 0.5, 12]} />
-          <meshStandardMaterial color="#94a3b8" metalness={0.95} />
-        </mesh>
-        <mesh position={[0, 0.1, 0]}>
-          <cylinderGeometry args={[0.35, 0.35, 0.05, 5]} />
-          <meshStandardMaterial color="#64748b" metalness={0.8} />
-        </mesh>
+      {/* ── DETECTIVE PANDA HACKING AT THE CONSOLE ── */}
+      <group position={[0, 0, 1.8]}>
+        <PandaDetective 
+          position={[0, 0, 0]}
+          rotation={[0, Math.PI, 0]}
+          scale={0.0105}
+          isSitting={true}
+          isWalking={false}
+        />
       </group>
     </group>
   );
