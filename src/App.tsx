@@ -290,7 +290,7 @@ export const App: React.FC = () => {
 
         {/* GAME ACTIVE WITH 3 PROGRESSIVE INVESTIGATION LEVELS */}
         {gameState.gameStatus === 'investigating' && (
-          <div>
+          <div className="w-full h-full">
             {activeTab === 'scene' ? (
               <CrimeScene
                 clues={clues}
