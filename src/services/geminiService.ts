@@ -1,3 +1,5 @@
+const BACKEND_API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
+
 let apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 export const setCustomApiKey = (key: string) => {
@@ -69,6 +71,23 @@ const MODEL_CANDIDATES = [
 ];
 
 export async function generateCriticalLoopPuzzle(): Promise<CodeRiddle> {
+  // 1. Try secure Backend API first
+  try {
+    const backendRes = await fetch(`${BACKEND_API_URL}/puzzle/critical-loop`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (backendRes.ok) {
+      const data = await backendRes.json();
+      if (data?.puzzle && data.puzzle.codeSnippet && Array.isArray(data.puzzle.options)) {
+        return data.puzzle as CodeRiddle;
+      }
+    }
+  } catch (backendErr) {
+    console.warn('[Frontend] Backend API unreachable, falling back to direct client/cached pool:', backendErr);
+  }
+
+  // 2. Direct client fallback if backend is offline
   const currentKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
 
   if (currentKey) {
@@ -184,6 +203,28 @@ export async function askSuspectAI(
   history: Array<{ role: 'user' | 'model'; text: string }>,
   userMessage: string
 ): Promise<string> {
+  // 1. Try secure Backend API first
+  try {
+    const backendRes = await fetch(`${BACKEND_API_URL}/interrogation/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        suspectSystemPrompt: systemPrompt,
+        history,
+        userQuestion: userMessage
+      })
+    });
+    if (backendRes.ok) {
+      const data = await backendRes.json();
+      if (data?.reply) {
+        return data.reply;
+      }
+    }
+  } catch (backendErr) {
+    console.warn('[Frontend] Backend interrogation API unreachable, using direct client/smart fallback:', backendErr);
+  }
+
+  // 2. Direct client fallback if backend is offline
   const currentKey = apiKey || import.meta.env.VITE_GEMINI_API_KEY;
 
   if (currentKey) {
