@@ -3,6 +3,7 @@ import { Lock, Unlock, AlertCircle, KeyRound, Delete, Sparkles, Shield, Cpu } fr
 import confetti from 'canvas-confetti';
 import { sounds } from '../services/audioService';
 import type { SafePuzzle } from '../types/game';
+import { verifySafePasscodeOnBackend } from '../services/gameService';
 
 interface SafeModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const SafeKeypadModal: React.FC<SafeModalProps> = ({
   const [shake, setShake] = useState(false);
   const [dialRotation, setDialRotation] = useState(0);
   const [keycardGrabbed, setKeycardGrabbed] = useState(isAlreadyOpened);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   if (!isOpen) return null;
 
@@ -45,17 +47,38 @@ export const SafeKeypadModal: React.FC<SafeModalProps> = ({
     setError(null);
   };
 
-  const handleSubmit = () => {
-    if (pin === correctCode) {
-      sounds.playSafeSuccess();
-      onSuccessUnlock();
-      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
-    } else {
-      sounds.playError();
-      setError('ACCESS DENIED: INCORRECT COMBINATION');
-      setShake(true);
-      setPin('');
-      setTimeout(() => setShake(false), 500);
+  const handleSubmit = async () => {
+    if (pin.length !== 4 || isVerifying) return;
+    setIsVerifying(true);
+    setError(null);
+
+    try {
+      const res = await verifySafePasscodeOnBackend(pin, correctCode);
+      if (res.unlocked) {
+        sounds.playSafeSuccess();
+        onSuccessUnlock();
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      } else {
+        sounds.playError();
+        setError(res.message || 'ACCESS DENIED: INCORRECT COMBINATION');
+        setShake(true);
+        setPin('');
+        setTimeout(() => setShake(false), 500);
+      }
+    } catch {
+      if (pin === correctCode) {
+        sounds.playSafeSuccess();
+        onSuccessUnlock();
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      } else {
+        sounds.playError();
+        setError('ACCESS DENIED: INCORRECT COMBINATION');
+        setShake(true);
+        setPin('');
+        setTimeout(() => setShake(false), 500);
+      }
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -98,115 +121,130 @@ export const SafeKeypadModal: React.FC<SafeModalProps> = ({
               className={`w-20 h-20 rounded-full border-4 shadow-2xl flex items-center justify-center transition-transform duration-300 ${
                 isAlreadyOpened 
                   ? 'border-emerald-400 bg-gradient-to-br from-emerald-900 to-emerald-950 text-emerald-400 shadow-emerald-500/20' 
-                  : 'border-amber-400 bg-gradient-to-br from-slate-900 to-slate-800 text-amber-400 shadow-amber-500/20'
+                  : 'border-slate-600 bg-gradient-to-br from-slate-800 to-slate-900 text-slate-300 shadow-black/50'
               }`}
             >
               {isAlreadyOpened ? (
-                <Unlock className="w-9 h-9 animate-pulse" />
+                <Unlock className="w-9 h-9 text-emerald-400 animate-pulse" />
               ) : (
-                <Lock className="w-9 h-9" />
+                <Lock className="w-9 h-9 text-amber-400" />
               )}
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-2">
-            <Shield className="w-4 h-4 text-amber-400" />
-            <h3 className="text-lg font-black tracking-wider text-white uppercase">
-              Titanium Vault Safe
-            </h3>
-            <Cpu className="w-4 h-4 text-sky-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-600 text-xs font-mono tracking-widest text-slate-300 uppercase mb-1">
+            <Shield className="w-3.5 h-3.5 text-sky-400" /> Biometric Safe Relay
           </div>
-          <p className="text-[11px] font-mono tracking-widest uppercase mt-0.5 text-slate-400">
-            {isAlreadyOpened ? 'STATUS: LOCKDOWN OVERRIDDEN' : 'CYBER-LOCK ARMED • 4-DIGIT PIN REQUIRED'}
-          </p>
+          <h2 className="text-xl font-black text-white tracking-wide">
+            {isAlreadyOpened ? 'VAULT DECRYPTED' : 'ENTER 4-DIGIT PIN'}
+          </h2>
         </div>
 
-        {/* If safe opened: Interactive Keycard Pickup! */}
+        {/* Unlocked State */}
         {isAlreadyOpened ? (
           <div className="space-y-4">
-            <div className="p-5 bg-emerald-950/60 border-2 border-emerald-500/60 rounded-2xl text-center space-y-3 shadow-inner">
-              <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest block">
-                ✓ Vault Mechanism Disengaged
-              </span>
-
-              {/* Physical Interactive Master Keycard */}
-              <div 
-                onClick={handleGrabKeycard}
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  keycardGrabbed 
-                    ? 'bg-emerald-600 text-white border-emerald-400 shadow-md scale-95' 
-                    : 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 border-amber-300 shadow-xl shadow-amber-500/25 hover:scale-105 active:scale-95 animate-pulse'
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs font-bold font-mono">
-                  <span>EXECUTIVE OVERRIDE</span>
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="text-xl font-black tracking-widest my-2">MASTER KEYCARD</div>
-                <div className="text-[10px] text-right font-mono font-bold">
-                  {keycardGrabbed ? '✓ IN DETECTIVE INVENTORY' : '👆 CLICK TO TAKE KEYCARD'}
-                </div>
+            <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-5 text-center">
+              <div className="inline-flex items-center gap-2 text-emerald-400 font-bold text-sm mb-1 font-mono uppercase tracking-wider">
+                <Sparkles className="w-4 h-4" /> Security Lock Disengaged
               </div>
-
-              <p className="text-xs text-slate-300 leading-relaxed font-sans">
-                Use this master keycard at the <strong>High-Security Blast Door</strong> to proceed to interrogation!
+              <p className="text-xs text-slate-300 mb-4 font-mono">
+                Safe mechanism has released the internal compartment lock.
               </p>
+
+              {/* Inside the safe: Keycard Item */}
+              <div className={`p-4 rounded-xl border-2 transition-all ${
+                keycardGrabbed 
+                  ? 'bg-slate-900/60 border-slate-700 opacity-60' 
+                  : 'bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-amber-950/40 border-amber-500/50 shadow-lg shadow-amber-500/10'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-slate-950 shadow-md flex-shrink-0">
+                    <KeyRound className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-amber-400 font-mono uppercase tracking-wider">FOUND INSIDE:</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">LEVEL 4 CLEARANCE</span>
+                    </div>
+                    <div className="font-bold text-white text-sm truncate">Executive RFID Keycard</div>
+                    <div className="text-[11px] text-slate-400">Grants biometric passage through Penthouse Exit Door.</div>
+                  </div>
+                </div>
+
+                {!keycardGrabbed ? (
+                  <button
+                    onClick={handleGrabKeycard}
+                    className="mt-3 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black rounded-lg text-xs font-mono uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5"
+                  >
+                    Take Keycard into Inventory
+                  </button>
+                ) : (
+                  <div className="mt-2 text-center text-xs text-emerald-400 font-mono">
+                    ✓ Stored in Evidence Belt. Penthouse Door is now unlocked!
+                  </div>
+                )}
+              </div>
             </div>
 
-            <button 
+            <button
               onClick={onClose}
-              className="w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl font-bold text-sm transition-all active:scale-95 shadow-lg shadow-sky-600/30"
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold text-sm transition-all"
             >
-              Return to Crime Scene
+              Close Safe
             </button>
           </div>
         ) : (
+          /* Locked Keypad State */
           <div className="space-y-4">
-            {/* Cyber Terminal Digital LCD Screen */}
-            <div className={`bg-slate-950 rounded-2xl p-4 text-center border border-slate-700 shadow-inner transition-all ${
-              shake ? 'animate-bounce ring-2 ring-red-500' : ''
+            {/* Display screen */}
+            <div className={`relative bg-slate-950 rounded-2xl p-4 border-2 transition-all ${
+              shake 
+                ? 'border-red-500 shadow-lg shadow-red-500/20 translate-x-1' 
+                : 'border-slate-800 shadow-inner'
             }`}>
-              <div className="text-[10px] font-mono uppercase text-sky-400 tracking-widest mb-1.5 font-bold flex items-center justify-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping inline-block" />
-                ENTER ENCRYPTION PIN
+              <div className="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-1">
+                <span>COMBINATION CODE</span>
+                <span className="text-sky-400">{pin.length} / 4 DIGITS</span>
               </div>
-              <div className="flex justify-center gap-2.5">
+              <div className="flex justify-center gap-3 py-1">
                 {[0, 1, 2, 3].map(i => (
                   <div 
                     key={i} 
-                    className={`w-12 h-14 rounded-xl flex items-center justify-center text-2xl font-bold font-mono border-2 transition-all ${
-                      pin[i]
-                        ? 'bg-sky-600 border-sky-400 text-white shadow-lg shadow-sky-500/30 scale-105'
-                        : 'bg-slate-900 border-slate-800 text-slate-600'
+                    className={`w-11 h-12 rounded-xl flex items-center justify-center text-xl font-mono font-black transition-all ${
+                      pin[i] 
+                        ? 'bg-sky-500/20 border-2 border-sky-400 text-sky-300 shadow-lg shadow-sky-500/20 scale-105' 
+                        : 'bg-slate-900 border border-slate-800 text-slate-600'
                     }`}
                   >
-                    {pin[i] || '—'}
+                    {pin[i] || '•'}
                   </div>
                 ))}
               </div>
+
               {error && (
-                <div className="flex items-center justify-center gap-1.5 mt-2.5 text-xs font-mono text-red-400 font-bold bg-red-950/60 py-1 px-2 rounded-lg border border-red-500/40">
-                  <AlertCircle className="w-3.5 h-3.5" /> {error}
+                <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-red-400 font-mono">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span>{error}</span>
                 </div>
               )}
             </div>
 
-            {/* Industrial Vault 3x4 Keypad Grid */}
+            {/* Keypad Digits */}
             <div className="grid grid-cols-3 gap-2">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(n => (
-                <button 
-                  key={n} 
-                  onClick={() => handleKey(n)}
-                  className="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-sky-700 text-white font-bold text-lg rounded-xl transition-all active:scale-95 border border-slate-600 shadow-md font-mono"
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(num => (
+                <button
+                  key={num}
+                  onClick={() => handleKey(num)}
+                  className="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-sky-700 text-white font-bold text-lg rounded-xl border border-slate-600 shadow-md transition-all active:scale-95 font-mono"
                 >
-                  {n}
+                  {num}
                 </button>
               ))}
               <button 
                 onClick={handleClear}
-                className="py-3.5 bg-red-950/80 hover:bg-red-900 active:bg-red-800 text-red-300 font-mono font-bold text-xs rounded-xl border border-red-700/60 transition-all active:scale-95"
+                className="py-3.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 text-xs font-mono font-bold rounded-xl border border-slate-600 transition-all active:scale-95"
               >
-                CLEAR
+                CLR
               </button>
               <button 
                 onClick={() => handleKey('0')}
@@ -225,10 +263,18 @@ export const SafeKeypadModal: React.FC<SafeModalProps> = ({
             {/* Submit Passcode Button */}
             <button 
               onClick={handleSubmit} 
-              disabled={pin.length !== 4}
+              disabled={pin.length !== 4 || isVerifying}
               className="w-full py-3.5 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 disabled:opacity-30 disabled:cursor-not-allowed text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg shadow-sky-600/30 active:scale-98 font-mono tracking-wider uppercase"
             >
-              <KeyRound className="w-4 h-4" /> Disengage Vault Lock
+              {isVerifying ? (
+                <>
+                  <Cpu className="w-4 h-4 animate-spin" /> Verifying with Server Vault...
+                </>
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4" /> Disengage Vault Lock
+                </>
+              )}
             </button>
 
             <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-700 text-center text-xs text-amber-300 font-mono">

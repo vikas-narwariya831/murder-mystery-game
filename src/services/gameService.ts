@@ -78,10 +78,36 @@ export async function generateCriticalLoopPuzzle(): Promise<CodeRiddle> {
 }
 
 /**
+ * Verify Wall Safe PIN Passcode on the backend
+ */
+export async function verifySafePasscodeOnBackend(
+  pin: string,
+  fallbackCode?: string,
+  sessionId?: string
+): Promise<{ success: boolean; unlocked: boolean; message: string }> {
+  try {
+    const response = await apiClient.post<{ success: boolean; unlocked: boolean; message: string }>('/puzzle/safe/verify', {
+      pin,
+      fallbackCode,
+      sessionId
+    });
+    return response.data;
+  } catch (err: any) {
+    if (err.response?.data) {
+      return err.response.data;
+    }
+    // Client fallback check if backend unreachable
+    const isMatched = Boolean(fallbackCode && fallbackCode.trim() === pin.trim());
+    return {
+      success: isMatched,
+      unlocked: isMatched,
+      message: isMatched ? 'ACCESS GRANTED (Offline mode)' : 'ACCESS DENIED: INCORRECT COMBINATION'
+    };
+  }
+}
+
+/**
  * Interrogate suspect through backend AI proxy
- * Supports both signatures:
- * 1) askSuspectAI(systemPrompt, messages, text)
- * 2) askSuspectAI(suspectId, userQuestion, unlockedClues, evidenceNotes)
  */
 export async function askSuspectAI(
   suspectOrPrompt: string,
@@ -95,7 +121,6 @@ export async function askSuspectAI(
   let notes: string[] = evidenceNotes || [];
 
   if (Array.isArray(messagesOrQuestion)) {
-    // Signature: (systemPrompt, messages, userQuestion)
     const promptLower = suspectOrPrompt.toLowerCase();
     if (promptLower.includes('evelyn')) suspectId = 'evelyn';
     else if (promptLower.includes('aria') || promptLower.includes('a.r.i.a')) suspectId = 'aria';
@@ -103,7 +128,6 @@ export async function askSuspectAI(
 
     question = typeof userQuestionOrClues === 'string' ? userQuestionOrClues : '';
   } else {
-    // Signature: (suspectId, userQuestion, unlockedClues, evidenceNotes)
     suspectId = suspectOrPrompt;
     question = typeof messagesOrQuestion === 'string' ? messagesOrQuestion : '';
     if (Array.isArray(userQuestionOrClues)) {
