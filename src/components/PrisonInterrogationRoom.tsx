@@ -4,7 +4,7 @@ import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { CinematicInterrogation3D } from './CinematicInterrogation3D';
 import { Scene3DLoader } from './Scene3DLoader';
 import type { Suspect, ClueItem } from '../types/game';
-import { askSuspectAI } from '../services/geminiService';
+import { askSuspectAI } from '../services/gameService';
 import { 
   Loader2, 
   ShieldAlert, 

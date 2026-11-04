@@ -15,7 +15,7 @@ import {
   ScanLine
 } from 'lucide-react';
 import { sounds } from '../services/audioService';
-import { generateCriticalLoopPuzzle, type CodeRiddle } from '../services/geminiService';
+import { generateCriticalLoopPuzzle, type CodeRiddle } from '../services/gameService';
 import { ForensicClue3DViewer } from './ForensicClue3DViewer';
 import confetti from 'canvas-confetti';
 

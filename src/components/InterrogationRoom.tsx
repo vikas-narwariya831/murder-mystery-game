@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Suspect } from '../types/game';
-import { askSuspectAI } from '../services/geminiService';
+import { askSuspectAI } from '../services/gameService';
 import { Send, Bot, UserCircle, Loader2, ShieldAlert, Lightbulb } from 'lucide-react';
 
 interface InterrogationProps {
