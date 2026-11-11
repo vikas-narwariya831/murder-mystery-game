@@ -1,7 +1,10 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig, type AxiosResponse } from 'axios';
 
-// Base backend URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000/api';
+// Base backend URL from environment variables (defaults to production Vercel backend)
+const rawBackendUrl = (
+  import.meta.env.VITE_BACKEND_URL || 'https://murder-mystery-game-backend-livid.vercel.app/api'
+).replace(/\/+$/, '');
+const API_BASE_URL = rawBackendUrl.endsWith('/api') ? rawBackendUrl : `${rawBackendUrl}/api`;
 
 /**
  * Centralized Axios instance with timeout and standard headers
